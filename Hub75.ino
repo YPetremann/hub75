@@ -16,10 +16,12 @@
 #define LT 53
 
 int pins[]={CL};
+byte pixels[64][32];
 void setup() {
   Serial.begin(9600);
   Serial.println("===========================");
   Serial.println(PROJECT);
+
   pinMode(R0, OUTPUT);
   pinMode(G0, OUTPUT);
   pinMode(B0, OUTPUT);
@@ -34,6 +36,59 @@ void setup() {
   pinMode(CL, OUTPUT);
   pinMode(OE, OUTPUT);
   pinMode(LT, OUTPUT);
+
+  /*
+  for(byte y=0;y<16;y++){
+    for(byte x=0;x<64;x++){
+      if(x>1 && x<7 && y>1 && y<7){
+        pixels[x][y]=5;
+        pixels[x][y+16]=4;
+      } else if(x>1 && x<7 && (y==1 || y==7)){
+        pixels[x][y]=5;
+        pixels[x][y+16]=4;
+      } else if(y>1 && y<7 && (x==1 || x==7)){
+        pixels[x][y]=5;
+        pixels[x][y+16]=4;
+      } else if(x+y>30 && x-y<=34){
+        pixels[x][y]=2;
+        pixels[x][y+16]=1;
+      } else{
+        pixels[x][y]=2;
+        pixels[x][y+16]=4;
+      }
+    }
+  }
+  */
+}
+void pix(byte x, byte y, byte col){
+  if(x>=0 && x<64 && y>=0 && y<32)
+    pixels[x][y]=col;
+}
+void rect(byte x,byte y,byte w,byte h,byte col){
+  byte mx=x+w;
+  byte my=y+h;
+  for(byte i=x;i<mx;i++)
+    for(byte j=y;j<my;j++)
+      pix(i,j,col);
+}
+
+void scenery(bool day, byte pos){
+  // grass
+  rect(0,16,64,16,4);
+  // sky
+  rect(0,0,64,16,day?2:0);
+  if(day){
+    rect(pos+1,2,6,4,5);
+    rect(pos+2,1,4,6,5);
+  }else{
+    rect(pos+3,1,1,1,7);
+    rect(pos+2,1,1,4,7);
+    rect(pos+1,2,1,4,7);
+    rect(pos+3,4,1,1,7);
+    rect(pos+6,4,1,1,7);
+    rect(pos+2,5,5,1,7);
+    rect(pos+2,6,4,1,7);
+  }
 }
 
 void addr(byte adr){
@@ -43,7 +98,7 @@ void addr(byte adr){
   digitalWrite(LD, adr & 8);
   //digitalWrite(LE, adr & 16);
 }
-void color(int c1, int c2){
+void color(byte c1, byte c2){
   digitalWrite(R0, c1 & 1);
   digitalWrite(G0, c1 & 2);
   digitalWrite(B0, c1 & 4);
@@ -51,27 +106,12 @@ void color(int c1, int c2){
   digitalWrite(G1, c2 & 2);
   digitalWrite(B1, c2 & 4);
 }
-void frame(){
-}
-void latch(){
-}
-void clock(){
-}
-void loop() {
-  for(int y=0;y<16;y++){
+void draw(){
+  for(byte y=0;y<16;y++){
     digitalWrite(OE, HIGH);
     addr(y);
-    for(int x=0;x<64;x++){
-      if(x>1 && x<7 && y>1 && y<7)
-        color(5,4);
-      else if(x>1 && x<7 && (y==1 || y==7))
-        color(5,4);
-      else if(y>1 && y<7 && (x==1 || x==7))
-        color(5,4);
-      else if(x+y>30 && x-y<=34)
-        color(2,1);
-      else
-        color(2,4);
+    for(byte x=0;x<64;x++){
+      color(pixels[x][y], pixels[x][y+16]);
       digitalWrite(CL, false);
       digitalWrite(CL, true);
     }
@@ -80,4 +120,32 @@ void loop() {
   }
   digitalWrite(LT, LOW);
   digitalWrite(LT, HIGH);
+}
+
+byte x=1;
+byte y=1;
+byte dx=1;
+byte dy=1;
+byte t=1;
+void update(){
+  rect(x,y,4,4,t);
+  t++;
+  if(t==7) t=1;
+  x+=dx;
+  y+=dy;
+  if(x<1) dx=1;
+  if(y<1) dy=1;
+  if(x>59) dx=-1;
+  if(y>27) dy=-1;
+  rect(x,y,4,4,7);
+}
+bool day=true;
+void loop() {
+  t++;
+  if(t==72){
+    t=0;
+    day=!day;
+  }
+  scenery(day,t-7);
+  draw();
 }
