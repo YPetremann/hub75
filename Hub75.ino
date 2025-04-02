@@ -1,19 +1,19 @@
 #define PROJECT "Hub75  "__DATE__ " " __TIME__
 #include <digitalWriteFast.h>
 /* Hub75 Manual */
-#define R0 40
-#define G0 42
-#define B0 41
-#define R1 43
-#define G1 45
-#define B1 44
-#define LA 46
-#define LB 47
-#define LC 48
-#define LD 49
-#define LE 50
-#define CL 51
-#define LT 52
+#define RF 40
+#define GF 42
+#define BF 41
+#define RS 43
+#define GS 45
+#define BS 44
+#define RA 46
+#define RB 47
+#define RC 48
+#define RD 49
+#define RE 50
+#define CLK 51
+#define LAT 52
 #define OE 53
 
 #define BLACK 0
@@ -28,27 +28,27 @@
 #define WIDTH 128
 #define HEIGHT 32
 
-int pins[]={CL};
+int pins[]={CLK};
 byte pixels[WIDTH][HEIGHT];
 void setup() {
   Serial.begin(9600);
   Serial.println("===========================");
   Serial.println(PROJECT);
 
-  pinModeFast(R0, OUTPUT);
-  pinModeFast(G0, OUTPUT);
-  pinModeFast(B0, OUTPUT);
-  pinModeFast(R1, OUTPUT);
-  pinModeFast(G1, OUTPUT);
-  pinModeFast(B1, OUTPUT);
-  pinModeFast(LA, OUTPUT);
-  pinModeFast(LB, OUTPUT);
-  pinModeFast(LC, OUTPUT);
-  pinModeFast(LD, OUTPUT);
-  pinModeFast(LE, OUTPUT);
-  pinModeFast(CL, OUTPUT);
+  pinModeFast(RF, OUTPUT);
+  pinModeFast(GF, OUTPUT);
+  pinModeFast(BF, OUTPUT);
+  pinModeFast(RS, OUTPUT);
+  pinModeFast(GS, OUTPUT);
+  pinModeFast(BS, OUTPUT);
+  pinModeFast(RA, OUTPUT);
+  pinModeFast(RB, OUTPUT);
+  pinModeFast(RC, OUTPUT);
+  pinModeFast(RD, OUTPUT);
+  pinModeFast(RE, OUTPUT);
+  pinModeFast(CLK, OUTPUT);
   pinModeFast(OE, OUTPUT);
-  pinModeFast(LT, OUTPUT);
+  pinModeFast(LAT, OUTPUT);
 }
 void pix(byte x, byte y, byte col){
   if(x>=0 && x<WIDTH && y>=0 && y<HEIGHT)
@@ -82,20 +82,20 @@ void scenery(bool day, byte pos){
 }
 
 void addr(byte adr){
-  digitalWriteFast(LA, adr & 1);
-  digitalWriteFast(LB, adr & 2);
-  digitalWriteFast(LC, adr & 4);
-  digitalWriteFast(LD, adr & 8);
-  //digitalWrite(LE, adr & 16);
+  digitalWriteFast(RA, adr & 1);
+  digitalWriteFast(RB, adr & 2);
+  digitalWriteFast(RC, adr & 4);
+  digitalWriteFast(RD, adr & 8);
+  //digitalWrite(RE, adr & 16);
 }
 void color(byte c1, byte c2){
-  digitalWriteFast(R0, c1 & RED);
-  digitalWriteFast(G0, c1 & GREEN);
-  digitalWriteFast(B0, c1 & BLUE);
+  digitalWriteFast(RF, c1 & RED);
+  digitalWriteFast(GF, c1 & GREEN);
+  digitalWriteFast(BF, c1 & BLUE);
 
-  digitalWriteFast(R1, c2 & RED);
-  digitalWriteFast(G1, c2 & GREEN);
-  digitalWriteFast(B1, c2 & BLUE);
+  digitalWriteFast(RS, c2 & RED);
+  digitalWriteFast(GS, c2 & GREEN);
+  digitalWriteFast(BS, c2 & BLUE);
 }
 int lum=300;
 void draw(){
@@ -104,12 +104,12 @@ void draw(){
     addr(y);
     for(byte x=0;x<WIDTH;x++){
       color(pixels[x][y], pixels[x][y+16]);
-      digitalWriteFast(CL, false);
-      digitalWriteFast(CL, true);
+      digitalWriteFast(CLK, false);
+      digitalWriteFast(CLK, true);
     }
-    digitalWriteFast(LT, LOW);
+    digitalWriteFast(LAT, LOW);
     delayMicroseconds(lum);
-    digitalWriteFast(LT, HIGH);
+    digitalWriteFast(LAT, HIGH);
   }
   digitalWriteFast(OE, LOW);
 }
