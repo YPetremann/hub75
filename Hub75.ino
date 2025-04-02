@@ -1,136 +1,97 @@
-#define PROJECT "Hub75  "__DATE__ " " __TIME__
-#include <digitalWriteFast.h>
-/* Hub75 Manual */
-#define RF 40
-#define GF 42
-#define BF 41
-#define RS 43
-#define GS 45
-#define BS 44
-#define RA 46
-#define RB 47
-#define RC 48
-#define RD 49
-#define RE 50
-#define CLK 51
-#define LAT 52
-#define OE 53
+#include <RGBmatrixPanel.h>
+//#define CLK  8   // USE THIS ON ADAFRUIT METRO M0, etc.
+//#define CLK A4 // USE THIS ON METRO M4 (not M0)
+#define CLK 11 // USE THIS ON ARDUINO MEGA
+#define OE   9
+#define LAT 10
+#define A   A0
+#define B   A1
+#define C   A2
+#define D   A3
 
-#define BLACK 0
-#define RED 1
-#define GREEN 2
-#define YELLOW 3
-#define BLUE 4
-#define MAGENTA 5
-#define CYAN 6
-#define WHITE 7
+// Enable double buffering
+RGBmatrixPanel *matrix = new RGBmatrixPanel(A, B, C, D, CLK, LAT, OE, true, 64);
+#define setBrightness(x) fillScreen(0)
+#define clear()          fillScreen(0)
+#define show()           swapBuffers(true)
+#define Color(x,y,z)     Color444(x/16,y/16,z/16)
 
-#define WIDTH 128
-#define HEIGHT 32
+#define LED_BLACK           0
 
-int pins[]={CLK};
-byte pixels[WIDTH][HEIGHT];
+#define LED_RED_VERYLOW    (3 <<  11)
+#define LED_RED_LOW        (7 <<  11)
+#define LED_RED_MEDIUM     (15 << 11)
+#define LED_RED_HIGH       (31 << 11)
+
+#define LED_GREEN_VERYLOW  (1 <<  5)
+#define LED_GREEN_LOW      (15 << 5)
+#define LED_GREEN_MEDIUM   (31 << 5)
+#define LED_GREEN_HIGH     (63 << 5)
+
+#define LED_BLUE_VERYLOW     3
+#define LED_BLUE_LOW         7
+#define LED_BLUE_MEDIUM     15
+#define LED_BLUE_HIGH       31
+
+#define LED_ORANGE_VERYLOW (LED_RED_VERYLOW + LED_GREEN_VERYLOW)
+#define LED_ORANGE_LOW     (LED_RED_LOW     + LED_GREEN_LOW)
+#define LED_ORANGE_MEDIUM  (LED_RED_MEDIUM  + LED_GREEN_MEDIUM)
+#define LED_ORANGE_HIGH    (LED_RED_HIGH    + LED_GREEN_HIGH)
+
+#define LED_PURPLE_VERYLOW (LED_RED_VERYLOW + LED_BLUE_VERYLOW)
+#define LED_PURPLE_LOW     (LED_RED_LOW     + LED_BLUE_LOW)
+#define LED_PURPLE_MEDIUM  (LED_RED_MEDIUM  + LED_BLUE_MEDIUM)
+#define LED_PURPLE_HIGH    (LED_RED_HIGH    + LED_BLUE_HIGH)
+
+#define LED_CYAN_VERYLOW   (LED_GREEN_VERYLOW + LED_BLUE_VERYLOW)
+#define LED_CYAN_LOW       (LED_GREEN_LOW     + LED_BLUE_LOW)
+#define LED_CYAN_MEDIUM    (LED_GREEN_MEDIUM  + LED_BLUE_MEDIUM)
+#define LED_CYAN_HIGH      (LED_GREEN_HIGH    + LED_BLUE_HIGH)
+
+#define LED_WHITE_VERYLOW  (LED_RED_VERYLOW + LED_GREEN_VERYLOW + LED_BLUE_VERYLOW)
+#define LED_WHITE_LOW      (LED_RED_LOW     + LED_GREEN_LOW     + LED_BLUE_LOW)
+#define LED_WHITE_MEDIUM   (LED_RED_MEDIUM  + LED_GREEN_MEDIUM  + LED_BLUE_MEDIUM)
+#define LED_WHITE_HIGH     (LED_RED_HIGH    + LED_GREEN_HIGH    + LED_BLUE_HIGH)
+
+#define SCREEN_WIDTH  64
+#define SCREEN_HEIGHT 32
+
+String texte = "Welcome";
+int xPos = SCREEN_WIDTH;  // Commencer à droite
+
 void setup() {
-  Serial.begin(9600);
-  Serial.println("===========================");
-  Serial.println(PROJECT);
-
-  pinModeFast(RF, OUTPUT);
-  pinModeFast(GF, OUTPUT);
-  pinModeFast(BF, OUTPUT);
-  pinModeFast(RS, OUTPUT);
-  pinModeFast(GS, OUTPUT);
-  pinModeFast(BS, OUTPUT);
-  pinModeFast(RA, OUTPUT);
-  pinModeFast(RB, OUTPUT);
-  pinModeFast(RC, OUTPUT);
-  pinModeFast(RD, OUTPUT);
-  pinModeFast(RE, OUTPUT);
-  pinModeFast(CLK, OUTPUT);
-  pinModeFast(OE, OUTPUT);
-  pinModeFast(LAT, OUTPUT);
-}
-void pix(byte x, byte y, byte col){
-  if(x>=0 && x<WIDTH && y>=0 && y<HEIGHT)
-    pixels[x][y]=col;
-}
-void rect(byte x,byte y,byte w,byte h,byte col){
-  byte mx=x+w;
-  byte my=y+h;
-  for(byte i=x;i<mx;i++)
-    for(byte j=y;j<my;j++)
-      pix(i,j,col);
+  Serial.begin(9600);  // Initialiser la communication série à 9600 bauds
+  matrix->begin();
+  matrix->setTextWrap(false);
+  matrix->setBrightness(BRIGHTNESS);
+  matrix->setTextColor(LED_GREEN_HIGH);
+  matrix->setTextSize(1);
+  matrix->clear();
+  matrix->show();
 }
 
-void scenery(bool day, byte pos){
-  // grass
-  rect(0,HEIGHT/2,WIDTH,HEIGHT/2, GREEN);
-  // sky
-  rect(0,0,WIDTH,HEIGHT/2, day?BLUE:BLACK);
-  if(day){
-    rect(pos+1,2,6,4,YELLOW);
-    rect(pos+2,1,4,6,YELLOW);
-  }else{
-    rect(pos+3,1,1,1,WHITE);
-    rect(pos+2,1,1,4,WHITE);
-    rect(pos+1,2,1,4,WHITE);
-    rect(pos+3,4,1,1,WHITE);
-    rect(pos+6,4,1,1,WHITE);
-    rect(pos+2,5,5,1,WHITE);
-    rect(pos+2,6,4,1,WHITE);
-  }
-}
-
-void addr(byte adr){
-  digitalWriteFast(RA, adr & 1);
-  digitalWriteFast(RB, adr & 2);
-  digitalWriteFast(RC, adr & 4);
-  digitalWriteFast(RD, adr & 8);
-  //digitalWrite(RE, adr & 16);
-}
-void color(byte c1, byte c2){
-  digitalWriteFast(RF, c1 & RED);
-  digitalWriteFast(GF, c1 & GREEN);
-  digitalWriteFast(BF, c1 & BLUE);
-
-  digitalWriteFast(RS, c2 & RED);
-  digitalWriteFast(GS, c2 & GREEN);
-  digitalWriteFast(BS, c2 & BLUE);
-}
-int lum=300;
-void draw(){
-  digitalWrite(OE, HIGH);
-  for(byte y=0;y<16;y++){
-    addr(y);
-    for(byte x=0;x<WIDTH;x++){
-      color(pixels[x][y], pixels[x][y+16]);
-      digitalWriteFast(CLK, false);
-      digitalWriteFast(CLK, true);
+void display_scrollText() {
+    if(texte.length()==0) return;
+    matrix->clear();
+    matrix->setTextWrap(false);
+    matrix->setTextSize(1);
+    matrix->setRotation(0);
+    int min=texte.length()*-6;
+    for (int x=64; x>=min; x--) {
+        matrix->clear();
+        matrix->setCursor(x,SCREEN_HEIGHT/2-4);
+        matrix->print(texte);
+        matrix->show();
+        delay(25);
     }
-    digitalWriteFast(LAT, LOW);
-    delayMicroseconds(lum);
-    digitalWriteFast(LAT, HIGH);
-  }
-  digitalWriteFast(OE, LOW);
+    texte="";
 }
 
-byte t=1;
-bool day=true;
-void update() {
-  t++;
-  if(t==128+8) day=!day;
-  if(t==128+8) t=0;
-}
-void serialEvent() {
-  char s=Serial.read();
-  if(s<65) return;
-  Serial.print(s);
-  Serial.print(",");
-  lum=25*(s-65);
-  Serial.println(lum);
-}
 void loop() {
-  update();
-  scenery(day,t-7);
-  draw();
+  if (Serial.available()) {
+    texte = Serial.readString();  // Lire la chaîne de caractères reçue sur le port série
+    xPos = SCREEN_WIDTH;  // Réinitialiser la position du texte
+    Serial.println(texte);
+  }
+  display_scrollText();
 }
