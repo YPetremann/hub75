@@ -56,9 +56,9 @@ RGBmatrixPanel *matrix = new RGBmatrixPanel(A, B, C, D, CLK, LAT, OE, true, 64);
 #define SCREEN_WIDTH  64
 #define SCREEN_HEIGHT 32
 
-String texte = "Welcome";
-int xPos = SCREEN_WIDTH;  // Commencer à droite
-
+String text[4];
+int ofst[4];
+int minx[4];
 void setup() {
   Serial.begin(9600);  // Initialiser la communication série à 9600 bauds
   matrix->begin();
@@ -68,30 +68,35 @@ void setup() {
   matrix->setTextSize(1);
   matrix->clear();
   matrix->show();
+  setText(0,"Welcome");
+  setText(1,"to");
+  setText(2,"the");
+  setText(3,"Avilab");
+}
+void setText(int i, String txt){
+  text[i]=txt;
+  ofst[i]=SCREEN_WIDTH;
+  minx[i]=txt.length()*-6;
+}
+void scrollText() {
+  matrix->setTextWrap(false);
+  matrix->setTextSize(1);
+  matrix->setRotation(0);
+  for (int i=0; i<4; i++) {
+    matrix->setCursor(ofst[i],i*8);
+    matrix->print(text[i]);
+    ofst[i]=ofst[i]<minx[i] ? SCREEN_WIDTH : ofst[i]-1 ;
+  }
 }
 
-void display_scrollText() {
-    if(texte.length()==0) return;
-    matrix->clear();
-    matrix->setTextWrap(false);
-    matrix->setTextSize(1);
-    matrix->setRotation(0);
-    int min=texte.length()*-6;
-    for (int x=64; x>=min; x--) {
-        matrix->clear();
-        matrix->setCursor(x,SCREEN_HEIGHT/2-4);
-        matrix->print(texte);
-        matrix->show();
-        delay(25);
-    }
-    texte="";
-}
-
+int index=0;
 void loop() {
   if (Serial.available()) {
-    texte = Serial.readString();  // Lire la chaîne de caractères reçue sur le port série
-    xPos = SCREEN_WIDTH;  // Réinitialiser la position du texte
-    Serial.println(texte);
+    setText(index,Serial.readString());
+    index=(index+1)%4;
   }
-  display_scrollText();
+  matrix->clear();
+  scrollText();
+  matrix->show();
+  delay(1);
 }
