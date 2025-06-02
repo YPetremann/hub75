@@ -10,18 +10,16 @@ let animationDelay = 250;
 
 // Monaco loader
 window.require.config({
-	paths: { vs: "https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs" },
+	paths: { vs: "https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs" },
 });
 window.require(["vs/editor/editor.main"], () => {
 	const saved = localStorage.getItem("hub75_code");
 	editor = monaco.editor.create(document.getElementById("editor"), {
 		value: saved !== null ? saved : defaultCode,
-		language: "hub75", // custom language for syntax highlighting
+		language: "hub75",
 		theme: "vs-dark",
 		fontSize: 16,
-		minimap: { enabled: false },
 	});
-	// Register custom language for Hub75 commands
 	monaco.languages.register({ id: "hub75" });
 	monaco.languages.setMonarchTokensProvider("hub75", {
 		tokenizer: {
@@ -34,6 +32,7 @@ window.require(["vs/editor/editor.main"], () => {
 			],
 		},
 	});
+
 	window.addEventListener("resize", () => {
 		editor.layout();
 	});
@@ -42,12 +41,17 @@ window.require(["vs/editor/editor.main"], () => {
 		updateDisplay();
 	});
 	editor.onDidChangeCursorPosition(updateDisplay);
-	editor.onDidChangeModelContent(stopAnimOnEdit);
-	editor.onDidChangeCursorPosition(stopAnimOnEdit);
+	setTimeout(() => {
+		startAnimation();
+	}
+	, 1000);
+
 });
 
 function stopAnimOnEdit() {
-	if (isAnimating) stopAnimation();
+	if (!isAnimating) return
+	console.log("Stopping animation due to edit");
+	stopAnimation();
 }
 
 const canvas = document.getElementById("canvas");
@@ -146,10 +150,6 @@ function stopAnimation() {
 	if (animationInterval) clearInterval(animationInterval);
 	animationInterval = null;
 }
-
-window.onload = () => {
-	setTimeout(updateDisplay, 500);
-};
 
 (() => {
 	const font = new FontFace("Picopixel", "url(./fonts/Picopixel.ttf)");
