@@ -1,4 +1,4 @@
-#include <RGBmatrixPanel.h>
+#include "BufferedMatrixPanel.h"
 #include <Fonts/Picopixel.h>
 //#define CLK  8   // USE THIS ON ADAFRUIT METRO M0, etc.
 //#define CLK A4 // USE THIS ON METRO M4 (not M0)
@@ -13,7 +13,7 @@
 #define SCREEN_HEIGHT 32
 
 // Enable double buffering
-RGBmatrixPanel *matrix = new RGBmatrixPanel(A, B, C, D, CLK, LAT, OE, true, 64);
+BufferedMatrixPanel *matrix = new BufferedMatrixPanel(A, B, C, D, CLK, LAT, OE, true, SCREEN_WIDTH);
 bool LOG=false;
 void setup() {
   Serial.begin(9600);
@@ -374,6 +374,7 @@ void removeCursor(){
   matrix->drawPixel(cx,cy,ocol);
 }
 void displayCursor(){
+  ocol = matrix->getPixel(cx,cy);
   uint16_t ncol = millis() % 500 < 250 ? matrix->Color888(0,0,0):col;
   matrix->drawPixel(cx,cy, ncol);
 }
