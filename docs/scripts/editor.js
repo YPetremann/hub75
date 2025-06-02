@@ -152,7 +152,7 @@ window.onload = () => {
 };
 
 (() => {
-	const font = new FontFace("Picopixel", "url(Fonts/Picopixel.ttf)");
+	const font = new FontFace("Picopixel", "url(./fonts/Picopixel.ttf)");
 	font.load().then((loadedFace) => {
 		document.fonts.add(loadedFace);
 		updateDisplay();
