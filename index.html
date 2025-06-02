@@ -1,206 +1,44 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <title>Simulateur Hub75</title>
-  <style>
-    body { font-family: sans-serif; margin: 0; padding: 0; background: #222; color: #eee; }
-    #container { display: flex; flex-direction: column; height: 100vh; }
-    #editor { width: 100vw; height: 100vh; }
-    #right { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
-    #controls { display: flex; margin: 0.5em; gap:0.5em;}
-    #canvas { background: #111; image-rendering:pixelated; padding: 0;}
-  </style>
-  <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.js"></script>
-</head>
-<body>
-<div id="container">
-  <div id="editor"></div>
-  <div id="right">
-    <canvas id="canvas"></canvas>
-  </div>
-  <toolbar id="controls">
-    <label>
-      <input type="checkbox" id="showToCursor" checked/> Afficher jusqu'au curseur
-    </label>
-    <label>
-      <input type="checkbox" id="autoUpdate" checked/> Mise à jour automatique
-    </label>
-    <button id="runBtn">Exécuter</button>
-  </toolbar>
-</div>
-<script>
-  let editor;
-  require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs' } });
-  require(['vs/editor/editor.main'], function() {
-    editor = monaco.editor.create(document.getElementById('editor'), {
-      value: `C 0 0 0;F;\nC 0 255 0;M 1 1;P "Hello!";Z\nC 255 0 0;M 1 7;P "Test";Z`,
-      language: 'plaintext',
-      theme: 'vs-dark',
-      fontSize: 16,
-      minimap: { enabled: false }
-    });
-    // Ajout de l'actualisation automatique
-    editor.onDidChangeModelContent(updateDisplay);
-    editor.onDidChangeCursorPosition(updateDisplay);
-  });
-
-  const canvas = document.getElementById('canvas');
-  const SCREEN_WIDTH = 64, SCREEN_HEIGHT = 32, SCALE = 10;
-  canvas.width = SCREEN_WIDTH * SCALE;
-  canvas.height = SCREEN_HEIGHT * SCALE;
-  const ctx = canvas.getContext('2d');
-  // set canvas as pixelated
-  ctx.imageSmoothingEnabled = false;
-  ctx.webkitImageSmoothingEnabled = false;
-  ctx.scale(SCALE, SCALE);
-  window.devicePixelRatio=2;
-
-  function resetScreen() {
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-  }
-
-  function drawPixel(x, y, color) {
-    ctx.fillStyle = color;
-    ctx.fillRect(x, y, 1, 1);
-  }
-
-  function drawText(x, y, color, text) {
-    ctx.save();
-    ctx.fillStyle = color;
-    ctx.font = `${8}px Picopixel, monospace`;
-    ctx.textBaseline = 'top';
-    ctx.fillText(text, x, y);
-    ctx.restore();
-  }
-
-  function color888(r, g, b) {
-    return `rgb(${r},${g},${b})`;
-  }
-
-  function parseCommands(input) {
-    // Split by ; or newlines, ignore comments
-    let cmds = [];
-    let buf = '', inStr = false, inComment = false;
-    for (let i = 0; i < input.length; ++i) {
-      let c = input[i];
-      if (c === '\n') inComment = false;
-      if (!inStr && c === '#') inComment = true;
-      if (inComment) continue;
-      if (c === '"') inStr = !inStr;
-      if ((c === ';' || c === '\n') && !inStr) {
-        if (buf.trim()) cmds.push(buf.trim());
-        buf = '';
-      } else {
-        buf += c;
-      }
-    }
-    if (buf.trim()) cmds.push(buf.trim());
-    return cmds;
-  }
-
-  function runCommands(cmds) {
-    let col = color888(255,255,255);
-    let cx = 0, cy = 0;
-    resetScreen();
-    for (let cmd of cmds) {
-      let [name, ...args] = cmd.split(/\s+/);
-      name = name.trim();
-      if (name === '?' || !name) continue;
-      if (name === 'C' || name === 'c') {
-        let r = parseInt(args[0]) || 0, v = parseInt(args[1]) || 0, b = parseInt(args[2]) || 0;
-        col = color888(r, v, b);
-      } else if (name === 'M') {
-        cx = parseInt(args[0]) || 0; cy = parseInt(args[1]) || 0;
-      } else if (name === 'm') {
-        cx += parseInt(args[0]) || 0; cy += parseInt(args[1]) || 0;
-      } else if (name === 'L') {
-        let x = parseInt(args[0]) || 0, y = parseInt(args[1]) || 0;
-        drawLine(cx, cy, x, y, col); cx = x; cy = y;
-      } else if (name === 'l') {
-        let x = cx + (parseInt(args[0]) || 0), y = cy + (parseInt(args[1]) || 0);
-        drawLine(cx, cy, x, y, col); cx = x; cy = y;
-      } else if (name === 'H') {
-        let x = parseInt(args[0]) || 0;
-        drawLine(cx, cy, x, cy, col); cx = x;
-      } else if (name === 'h') {
-        let x = cx + (parseInt(args[0]) || 0);
-        drawLine(cx, cy, x, cy, col); cx = x;
-      } else if (name === 'V') {
-        let y = parseInt(args[0]) || 0;
-        drawLine(cx, cy, cx, y, col); cy = y;
-      } else if (name === 'v') {
-        let y = cy + (parseInt(args[0]) || 0);
-        drawLine(cx, cy, cx, y, col); cy = y;
-      } else if (name === 'R') {
-        let x = parseInt(args[0]) || 0, y = parseInt(args[1]) || 0;
-        drawRect(cx, cy, x, y, col);
-      } else if (name === 'r') {
-        let x = cx + (parseInt(args[0]) || 0), y = cy + (parseInt(args[1]) || 0);
-        drawRect(cx, cy, x, y, col);
-      } else if (name === 'P') {
-        let t = cmd.match(/P\s+"([^"]*)"/);
-        if (t) drawText(cx, cy, col, t[1]);
-      } else if (name === 'F' || name === 'f') {
-        ctx.fillStyle = col; ctx.fillRect(0, 0, SCREEN_WIDTH * SCALE, SCREEN_HEIGHT * SCALE);
-      }
-      // Z/z: no-op, handled by redraw
-    }
-  }
-
-  function drawLine(x0, y0, x1, y1, color) {
-    // Bresenham
-    x0 = Math.round(x0); y0 = Math.round(y0); x1 = Math.round(x1); y1 = Math.round(y1);
-    let dx = Math.abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
-    let dy = -Math.abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
-    let err = dx + dy, e2;
-    while (true) {
-      drawPixel(x0, y0, color);
-      if (x0 === x1 && y0 === y1) break;
-      e2 = 2 * err;
-      if (e2 >= dy) { err += dy; x0 += sx; }
-      if (e2 <= dx) { err += dx; y0 += sy; }
-    }
-  }
-
-  function drawRect(x0, y0, x1, y1, color) {
-    let x = Math.min(x0, x1), y = Math.min(y0, y1);
-    let w = Math.abs(x1 - x0), h = Math.abs(y1 - y0);
-    ctx.fillStyle = color;
-    ctx.fillRect(x * SCALE, y * SCALE, (w+1) * SCALE, (h+1) * SCALE);
-  }
-
-  document.getElementById('showToCursor').addEventListener('change', updateDisplay);
-
-  function updateDisplay() {
-    let code = editor.getValue();
-    let showToCursor = document.getElementById('showToCursor').checked;
-    if (showToCursor) {
-      let pos = editor.getPosition();
-      let lines = code.split('\n');
-      let upTo = lines.slice(0, pos.lineNumber).join('\n');
-      code = upTo;
-    }
-    let cmds = parseCommands(code);
-    runCommands(cmds);
-  }
-
-  document.getElementById('runBtn').onclick = updateDisplay;
-
-  // Initial draw
-  window.onload = () => {
-    setTimeout(updateDisplay, 500);
-  };
-
-  // Ajout dynamique de la police Picopixel si disponible
-  (function() {
-    const font = new FontFace('Picopixel', 'url(Fonts/Picopixel.ttf)');
-    font.load().then(function(loadedFace) {
-      document.fonts.add(loadedFace);
-      updateDisplay();
-    });
-  })();
-</script>
-</body>
+  <head>
+    <meta charset="UTF-8"/>
+    <title>Simulateur Hub75</title>
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+  </head>
+  <body class="font-sans m-0 p-0 bg-[#222] text-[#eee] h-screen">
+    <div class="flex flex-col h-screen">
+      <toolbar id="controls" class="flex gap-1 items-center">
+        <button id="runBtn" class="flex px-2 py-1 gap-1 items-center rounded bg-blue-600 text-white">
+          <span class="iconify" data-icon="mdi:image"></span> Generer
+        </button>
+        <label alt="Mise à jour automatique" class="flex px-2 py-1 gap-1 items-center">
+          <input type="checkbox" id="autoUpdate" checked class="accent-blue-500"/>
+          <span class="iconify" data-icon="mdi:auto-mode"></span>
+        </label>
+        <label alt=" Afficher jusqu'au curseur" class="flex px-2 py-1 gap-1 items-center">
+          <input type="checkbox" id="showToCursor" checked class="accent-blue-500"/>
+          <span class="iconify" data-icon="mdi:cursor-text"></span>
+        </label>
+        <label alt="Afficher le pointeur" class="flex px-2 py-1 gap-1 items-center" alt="Pointeur">
+          <input type="checkbox" id="showPointer" class="accent-blue-500"/>
+          <span class="iconify" data-icon="mdi:plus"></span>
+        </label>
+        <button id="animBtn" class="px-2 py-1 rounded bg-green-600 hover:bg-green-700 text-white flex items-center gap-1">
+          <span class="iconify" data-icon="mdi:play"></span> Animer
+        </button>
+        <label class="flex items-center px-2 py-1 ">
+          <input type="range" id="animDelay" min="0" max="1000" value="250" step="50" class="accent-green-500"> 
+          <span id="animDelayVal">250</span> ms
+        </label>
+      </toolbar>
+      <div id="editor" class="w-screen h-1 grow"></div>
+      <div class="flex flex-col items-center justify-center">
+        <canvas id="canvas" class="bg-[#111] p-0" style="image-rendering:pixelated;"></canvas>
+      </div>
+    </div>
+    <script type="module" src="./editor.js">
+          </script>
+  </body>
 </html>
