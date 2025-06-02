@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8"/>
+    <title>Simulateur Hub75</title>
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+  </head>
+  <body class="font-sans m-0 p-0 bg-[#222] text-[#eee] h-screen">
+    <div class="flex flex-col h-screen">
+      <toolbar id="controls" class="flex gap-1 items-center">
+        <button id="runBtn" class="flex px-2 py-1 gap-1 items-center rounded bg-blue-600 text-white">
+          <span class="iconify" data-icon="mdi:image"></span> Generer
+        </button>
+        <label alt="Mise à jour automatique" class="flex px-2 py-1 gap-1 items-center">
+          <input type="checkbox" id="autoUpdate" checked class="accent-blue-500"/>
+          <span class="iconify" data-icon="mdi:auto-mode"></span>
+        </label>
+        <label alt=" Afficher jusqu'au curseur" class="flex px-2 py-1 gap-1 items-center">
+          <input type="checkbox" id="showToCursor" checked class="accent-blue-500"/>
+          <span class="iconify" data-icon="mdi:cursor-text"></span>
+        </label>
+        <label alt="Afficher le pointeur" class="flex px-2 py-1 gap-1 items-center" alt="Pointeur">
+          <input type="checkbox" id="showPointer" class="accent-blue-500"/>
+          <span class="iconify" data-icon="mdi:plus"></span>
+        </label>
+        <button id="animBtn" class="px-2 py-1 rounded bg-green-600 hover:bg-green-700 text-white flex items-center gap-1">
+          <span class="iconify" data-icon="mdi:play"></span> Animer
+        </button>
+        <label class="flex items-center px-2 py-1 ">
+          <input type="range" id="animDelay" min="0" max="1000" value="250" step="50" class="accent-green-500"> 
+          <span id="animDelayVal">250</span> ms
+        </label>
+      </toolbar>
+      <div id="editor" class="w-screen h-1 grow"></div>
+      <div class="flex flex-col items-center justify-center">
+        <canvas id="canvas" class="bg-[#111] p-0" style="image-rendering:pixelated;"></canvas>
+      </div>
+    </div>
+    <script type="module" src="./editor.js">
+          </script>
+  </body>
+</html>
