@@ -13,135 +13,309 @@
 RGBmatrixPanel *matrix = new RGBmatrixPanel(A, B, C, D, CLK, LAT, OE, true, 64);
 #define setBrightness(x) fillScreen(0)
 #define clear()          fillScreen(0)
-#define show()           swapBuffers(true)
-#define Color(x,y,z)     (x/16)<<11&(y/16)<<5&(z/16)
 
 #define SCREEN_WIDTH  64
 #define SCREEN_HEIGHT 32
 
-struct Pos {
-  uint8_t x;
-  uint8_t y;
-};
-struct Target {
-  int color;
-  Pos a;
-  Pos b;
-};
-struct Dot {
-  Pos o;
-  Pos n;
-};
-Target targ;
-Target trap;
-Dot dot;
+String cmdBuf = "";
+boolean inComment=false;
+boolean inString=false;
 
-uint8_t clamp(uint8_t min,uint8_t cur,uint8_t max){
-  if(cur<=min) return min;
-  if(cur>=max) return max;
-  return cur;
-}
-int combo=0;
-int score=0;
-void resetGame(){
-  combo=0;
-  score=0;
-}
-byte posToIndex(byte x,byte y){
-  return (x>21?2:x>10?1:0)+(y>21?2:y>10?1:0)*3;
-}
-
-byte avail[9] = {0, 1, 2, 3, 4, 5, 6, 7, 8};
-void resetAvail(){
-  for(byte i=0;i<9;i++) avail[i]=i;
-}
-void swapAvail(byte a,byte c){ 
-  byte b=avail[a]; 
-  avail[a]=avail[c]; 
-  avail[c]=b;
-}
-void genTargets(){
-  byte op=posToIndex(dot.o.x,dot.o.y);
-  byte np=posToIndex(dot.n.x,dot.n.y);
-  resetAvail();
-  swapAvail(op,8);
-  swapAvail(np,7);
-  byte rndc=random(7);
-  byte cp=avail[rndc];
-  swapAvail(rndc,6);
-  byte rndt=random(6);
-  byte tp=avail[rndt];
-
-  Serial.print(op);Serial.print(",");
-  Serial.print(np);Serial.print("  ,");
-  Serial.print(rndc);Serial.print(",");
-  Serial.print(cp);Serial.print("  ");
-  Serial.print(rndt);Serial.print(",");
-  Serial.print(tp);Serial.print("  ");
-  for(byte i=0;i<9;i++) {
-    Serial.print(",");
-    Serial.print(avail[i]);
-  }  
-  Serial.println();
-
-  targ.a.x=(cp%3)*11; targ.b.x=targ.a.x+10;
-  targ.a.y=(cp/3)*11; targ.b.y=targ.a.y+10;
-  trap.a.x=(tp%3)*11; trap.b.x=trap.a.x+10;
-  trap.a.y=(tp/3)*11; trap.b.y=trap.a.y+10;
-  
-  matrix->fillScreen(0);
-  matrix->fillRect(targ.a.x,targ.a.y,targ.b.x-targ.a.x,targ.b.y-targ.a.y,31<<5);
-  matrix->fillRect(trap.a.x,trap.a.y,trap.b.x-trap.a.x,trap.b.y-trap.a.y,31<<11);
-
-  matrix->drawLine(32,0,32,32,0xFFFF);
-  matrix->setCursor(34, 0);
-  matrix->setTextColor(0xFFFF);
-  matrix->print(score);
-}
-bool check(Target to){
-  return dot.n.x>=to.a.x && dot.n.x<=to.b.x && dot.n.y>=to.a.y && dot.n.y<=to.b.y;
-}
-void breakCombo(){
-  combo=0;
-
-  matrix->fillRect(0,0,32,32,0xFFFF);
-  matrix->show();
-  delay(100);
-  matrix->fillScreen(0);
-  genTargets();
-}
-
-void scoreCombo(){
-  combo++; score+=combo;
-  genTargets();
-}
+uint16_t col=0;
+byte cx=0;
+byte cy=0;
 
 void setup() {
   Serial.begin(9600);
   matrix->begin();
-  matrix->fillScreen(Color(255,255,0));
-  matrix->setBrightness(BRIGHTNESS);
-  matrix->show();
-  dot.n.x=16;
-  dot.n.y=16;
-  resetGame();
-  genTargets();
+  while (!Serial) {}
+  color(0,0,0);
+  cls();
+  show();
+  Serial.println("");
+  Serial.println("SerialHub75 V1.0");
+  Serial.println("================");
+  Serial.println("Tappe ? pour afficher l'aide");
+  doCommand("C 0 0 0;F;C 255 0 0;M X5 5;L 9 9;Z");
+  cmdBuf = "";
 }
-void loop() {
-  matrix->drawLine(dot.o.x,dot.o.y,dot.n.x,dot.n.y,0);
-  dot.o.x=dot.n.x; dot.o.y=dot.n.y;
-  dot.n.x = 31-(analogRead(A9)*32/1024);
-  dot.n.y = analogRead(A10)*32/1024;
-  matrix->drawLine(dot.o.x,dot.o.y,dot.n.x,dot.n.y,31);
-  matrix->drawPixel(dot.n.x,dot.n.y,0xFFFF);
-  if(check(targ)) scoreCombo();
-  if(check(trap)) breakCombo();
-  matrix->show();
 
-  if(dot.n.x!=dot.o.x || dot.n.y!=dot.o.y){
-    Serial.print(dot.n.x);Serial.print(",");
-    Serial.print(dot.n.y);Serial.println();
+void serialEvent(){
+  while(Serial.available()){
+    char c = (char)Serial.read();
+    if(c == '\n') inComment=false;
+    if(!inString && c=='#') inComment=true;
+    if(inComment) continue;
+    if(c == '\n' || (!inString && c == ';')){
+      cmdBuf.trim();
+      if(inString) {
+        Serial.print("Invalid command: ");
+        Serial.println(cmdBuf);
+      }
+      else if(cmdBuf.length()>0) processCommand();
+      inString = false;
+      cmdBuf = "";
+    }else{
+      if(c=='"') inString=!inString;
+      cmdBuf+=c;
+    }
   }
+}
 
-  delay(10);
+String processCommands(String input) {
+  String cmdBuf = "";
+  bool inString = false;
+  bool inComment = false;
+  
+  for (int i = 0; i < input.length(); i++) {
+    char c = input.charAt(i);
+    if(c == '\n') inComment = false;
+    if(!inString && c == '#') inComment = true;
+    if(inComment) continue;
+    if(c == '\n' || (!inString && c == ';')) {
+      cmdBuf.trim();
+      if(inString) {
+        Serial.print("Invalid command: ");
+        Serial.println(cmdBuf);
+      } else if(cmdBuf.length() > 0) {
+        processCommand(cmdBuf);  // Appeler la fonction qui traite la commande
+      }
+      inString = false;
+      cmdBuf = "";
+    } else {
+      if(c == '"') {
+        inString = !inString;
+      }
+      cmdBuf += c;
+    }
+  }
+}
+
+void processCommand(cmdBuf){
+  byte index=cmdBuf.indexOf(' ');
+  String cmdName=cmdBuf.substring(0,index);
+  cmdBuf=cmdBuf.substring(index);
+  cmdBuf.trim();
+  doCommand(cmdName,cmdBuf);
+}
+
+String getArg(byte index) {
+  byte currentIndex = 1; // args are 1-based
+  bool inQuote = false;
+  byte start = 0;
+  byte length = 0;
+  byte i = 0;
+  while (i < cmdBuf.length()) {
+    // skip leading spaces
+    while (i < cmdBuf.length() && cmdBuf[i] == ' ') i++;
+
+    if (i >= cmdBuf.length()) break;
+
+    start = i;
+    if (cmdBuf[i] == '"') {
+      inQuote = true;
+      i++; // skip opening quote
+      while (i < cmdBuf.length() && cmdBuf[i] != '"') i++;
+      i++; // include closing quote
+    } else {
+      while (i < cmdBuf.length() && cmdBuf[i] != ' ') i++;
+    }
+
+    if (currentIndex == index) {
+      length = i - start;
+      return cmdBuf.substring(start, start+length);
+    }
+    currentIndex++;
+  }
+  return ""; // not found
+}
+
+String getArg(String key) {
+  bool inQuote = false;
+  byte i = 0;
+  while (i < cmdBuf.length()) {
+    // skip leading spaces
+    while (i < cmdBuf.length() && cmdBuf[i] == ' ') i++;
+
+    if (i >= cmdBuf.length()) break;
+
+    byte start = i;
+
+    // Handle quoted arguments
+    if (cmdBuf[i] == '"') {
+      i++; // skip opening quote
+      while (i < cmdBuf.length() && cmdBuf[i] != '"') i++;
+      i++; // include closing quote
+    } else {
+      // Check if the argument starts with the key
+      if (cmdBuf[i] == key[0]) {
+        byte keyLen = key.length();
+        if (cmdBuf.substring(i, i + keyLen) == key) {
+          byte valueStart = i + keyLen;
+          byte valueEnd = valueStart;
+          if (valueStart < cmdBuf.length() && cmdBuf[valueStart] == '"') {
+            valueStart++; // skip opening quote
+            valueEnd = valueStart;
+            while (valueEnd < cmdBuf.length() && cmdBuf[valueEnd] != '"') valueEnd++;
+            return cmdBuf.substring(valueStart, valueEnd - valueStart);
+          } else {
+            while (valueEnd < cmdBuf.length() && cmdBuf[valueEnd] != ' ') valueEnd++;
+            return cmdBuf.substring(valueStart, valueEnd - valueStart);
+          }
+        }
+      }
+      while (i < cmdBuf.length() && cmdBuf[i] != ' ') i++;
+    }
+    i++;
+  }
+  return ""; // not found
+}
+
+String getArg(byte index, String key){
+  String val = getArg(index);
+  if(val.length()==0) val = getArg(key);
+  return val;
+}
+
+String argString(String val, String defaultVal) {
+  if (val.length() == 0) return defaultVal;
+  if (val.length() >= 2 && val[0] == '"' && val[val.length() - 1] == '"') {
+    val = val.substring(1, val.length() - 1);
+  }
+  return val;
+}
+
+int argInt(String val, int defaultVal) {
+  if (val.length() == 0) return defaultVal;
+  for (int i = 0; i < val.length(); i++) {
+    if (!isDigit(val[i]) && !(i == 0 && val[i] == '-')) return defaultVal;
+  }
+  return val.toInt();
+}
+
+void loop() {}
+
+// C
+void color(byte r, byte g, byte b){
+  col=matrix->Color888(r,g,b);
+}
+// M
+void moveTo(byte ax,byte ay){ cx=ax; cy=ay; }
+// m
+void moveBy(byte rx,byte ry){ cx+=rx; cy+=ry; }
+// L
+void lineTo(byte ax,byte ay){ 
+  matrix->drawLine(cx,cy, ax,ay, col);
+  moveTo(ax,ay);
+}
+// l
+void lineBy(byte rx, byte ry){ lineTo(cy+rx,cy+ry); }
+// H
+void lineHTo(byte ax){ lineTo(ax,cy); }
+// V
+void lineVTo(byte ay){ lineTo(cx,ay); }
+// h
+void lineHBy(byte rx){ lineBy(rx,0); }
+// v
+void lineVBy(byte ry){ lineBy(0,ry); }
+// P
+void print(String text){
+  matrix->setCursor(cx, cy);
+  matrix->setTextColor(col);
+  matrix->print(text);
+}
+// R
+void rectTo(byte ax, byte ay){ matrix->fillRect(cx,cy, ax,ay, col); }
+// r
+void rectBy(byte rx, byte ry){ matrix->fillRect(cx,cy, cx+rx,cy+ry, col); }
+
+// F
+void cls(){ matrix->fillScreen(col);}
+
+// Z or z
+void show(){ matrix->swapBuffers(true); }
+
+void doCommand(String cmdName,String cmdBuf){
+  if(cmdName=="?") {
+    Serial.println("Commands List:");
+    Serial.println("C R0 V0 B255;  # definie couleur a 0,0,255 (bleu)");
+    Serial.println("M X5 Y10       # deplace position a 5,10");
+    Serial.println("m X5 Y10       # deplace position de 5,10");
+    Serial.println("L <X> <Y>      # fait une line a <X> <Y>");
+    Serial.println("l <X> <Y>      # fait une line de <X> <Y>");
+    Serial.println("H <X>          # fait une ligne horizontale a <X>");
+    Serial.println("h <X>          # fait une ligne horizontale de <X>");
+    Serial.println("V <Y>          # fait une ligne verticale a <Y>");
+    Serial.println("v <Y>          # fait une ligne verticale de <Y>");
+    Serial.println("P \"Texte\"     # ecrit Texte");
+    Serial.println("R <X> <Y>      # fait un rectangle a <X> <Y>");
+    Serial.println("r <X> <Y>      # fait un rectangle de <X> <Y>");
+    Serial.println("Z              # affiche le dessin");
+  }else if(cmdName=="C" || cmdName=="c") {
+    color(
+      argInt(getArg(1,"R"),0),
+      argInt(getArg(2,"V"),0),
+      argInt(getArg(3,"B"),0)
+    );
+  }else if(cmdName=="M"){
+    Serial.print("M");
+    Serial.print(" X "); Serial.print(argInt(getArg(1,"X"),0));
+    Serial.print(" Y "); Serial.print(argInt(getArg(2,"Y"),0));
+    Serial.println();
+    moveTo(
+      argInt(getArg(1,"X"),0),
+      argInt(getArg(2,"Y"),0)
+    );
+  }else if(cmdName=="m"){
+    moveBy(
+      argInt(getArg(1,"X"),0),
+      argInt(getArg(2,"Y"),0)
+    );
+  }else if(cmdName=="L"){
+    lineTo(
+      argInt(getArg(1,"X"),0),
+      argInt(getArg(2,"Y"),0)
+    );
+  }else if(cmdName=="l"){
+    lineBy(
+      argInt(getArg(1,"X"),0),
+      argInt(getArg(2,"Y"),0)
+    );
+  }else if(cmdName=="H"){
+    lineVTo(
+      argInt(getArg(1,"Y"),0)
+    );
+  }else if(cmdName=="h"){
+    lineHBy(
+      argInt(getArg(1,"X"),0)
+    );
+  }else if(cmdName=="V"){
+    lineHTo(
+      argInt(getArg(1,"Y"),0)
+    );
+  }else if(cmdName=="v"){
+    lineHBy(
+      argInt(getArg(1,"Y"),0)
+    );
+  }else if(cmdName=="P"){
+  }else if(cmdName=="R"){
+    rectTo(
+      argInt(getArg(1,"X"),0),
+      argInt(getArg(2,"Y"),0)
+    );
+  }else if(cmdName=="r"){
+    rectBy(
+      argInt(getArg(1,"X"),0),
+      argInt(getArg(2,"Y"),0)
+    );
+  }else if(cmdName=="F" || cmdName=="f" ){
+    cls();
+  }else if(cmdName=="Z"){
+    show();
+  }else {
+    Serial.print("Invalid command: ");
+    Serial.print(cmdName);
+    return;
+  }
+  Serial.println("OK");
 }
