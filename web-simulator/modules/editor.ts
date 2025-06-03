@@ -1,52 +1,45 @@
-import { defaultCode } from "./defaultCode.js";
-import { parseCommands } from "./parseCommands.js";
-import { runCommands } from "./runCommands.js";
+import { defaultCode } from "./defaultCode";
+import { parseCommands } from "./parseCommands";
+import { runCommands } from "./runCommands";
+import * as monaco from "monaco-editor"
+console.log(monaco);
 
-let editor;
 let pointerBlink = true;
 let isAnimating = false;
 let animationInterval = null;
 let animationDelay = 250;
 
 // Monaco loader
-window.require.config({
-	paths: { vs: "https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs" },
+const saved = localStorage.getItem("hub75_code");
+const editor = monaco.editor.create(document.getElementById("editor"), {
+	value: saved !== null ? saved : defaultCode,
+	language: "hub75",
+	theme: "vs-dark",
+	fontSize: 16,
 });
-window.require(["vs/editor/editor.main"], () => {
-	const saved = localStorage.getItem("hub75_code");
-	editor = monaco.editor.create(document.getElementById("editor"), {
-		value: saved !== null ? saved : defaultCode,
-		language: "hub75",
-		theme: "vs-dark",
-		fontSize: 16,
-	});
-	monaco.languages.register({ id: "hub75" });
-	monaco.languages.setMonarchTokensProvider("hub75", {
-		tokenizer: {
-			root: [
-				[/\b([CFZzMmLlHhVvRrP])\b/, "keyword"],
-				[/"[^"]*"/, "string"],
-				[/#[^\n]*/, "comment"],
-				[/\b\d+\b/, "number"],
-				[/;/, "delimiter"],
-			],
-		},
-	});
 
-	window.addEventListener("resize", () => {
-		editor.layout();
-	});
-	editor.onDidChangeModelContent(() => {
-		localStorage.setItem("hub75_code", editor.getValue());
-		updateDisplay();
-	});
-	editor.onDidChangeCursorPosition(updateDisplay);
-	setTimeout(() => {
-		startAnimation();
-	}
-	, 1000);
-
+monaco.languages.register({ id: "hub75" });
+monaco.languages.setMonarchTokensProvider("hub75", {
+	tokenizer: {
+		root: [
+			[/\b([CFZzMmLlHhVvRrP])\b/, "keyword"],
+			[/"[^"]*"/, "string"],
+			[/#[^\n]*/, "comment"],
+			[/\b\d+\b/, "number"],
+			[/;/, "delimiter"],
+		],
+	},
 });
+
+window.addEventListener("resize", () => editor.layout());
+editor.onDidChangeModelContent(() => {
+	localStorage.setItem("hub75_code", editor.getValue());
+	updateDisplay();
+});
+editor.onDidChangeCursorPosition(updateDisplay);
+setTimeout(() => {
+	startAnimation();
+}, 1000);
 
 function stopAnimOnEdit() {
 	if (!isAnimating) return
@@ -151,15 +144,15 @@ function stopAnimation() {
 	animationInterval = null;
 }
 
-(() => {
-	const font = new FontFace("Picopixel", "url(./fonts/Picopixel.ttf)");
-	font.load().then((loadedFace) => {
-		document.fonts.add(loadedFace);
-		updateDisplay();
-	});
-})();
+const font = new FontFace("Picopixel", "url(../fonts/Picopixel.ttf)");
+font.load().then((loadedFace) => {
+	document.fonts.add(loadedFace);
+	updateDisplay();
+});
 
 setInterval(() => {
 	pointerBlink = !pointerBlink;
 	if (document.getElementById("showPointer")?.checked) updateDisplay();
 }, 400);
+
+export default editor

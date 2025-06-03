@@ -4,7 +4,7 @@ import {
 	drawPixel,
 	drawRect,
 	drawText,
-} from "./drawUtils.js";
+} from "./drawUtils";
 
 export function runCommands(
 	cmds,

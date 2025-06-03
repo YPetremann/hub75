@@ -1,0 +1,28 @@
+{
+  "name": "web-simulator",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.1.8",
+    "tailwindcss": "^4.1.8",
+    "vite": "^6.3.5",
+    "vitest": "^3.2.0",
+    "iconify-icon": "^3.0.0",
+    "monaco-editor": "^0.52.2"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4",
+    "@tailwindcss/postcss": "^4.1.8",
+    "jsdom": "^26.1.0",
+    "postcss": "^8.5.4"
+  }
+}
