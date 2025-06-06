@@ -1,7 +1,7 @@
-import { defaultCode } from "./defaultCode";
+import * as monaco from "monaco-editor";
+import { defaultCode } from "../src/data/defaultCode";
 import { parseCommands } from "./parseCommands";
 import { runCommands } from "./runCommands";
-import * as monaco from "monaco-editor"
 console.log(monaco);
 
 let pointerBlink = true;
@@ -42,7 +42,7 @@ setTimeout(() => {
 }, 1000);
 
 function stopAnimOnEdit() {
-	if (!isAnimating) return
+	if (!isAnimating) return;
 	console.log("Stopping animation due to edit");
 	stopAnimation();
 }
@@ -66,32 +66,7 @@ document
 	.getElementById("showPointer")
 	.addEventListener("change", updateDisplay);
 
-function updateDisplay() {
-	if (editor === undefined) return;
-	let code = editor.getValue();
-	const showToCursor = document.getElementById("showToCursor").checked;
-	if (showToCursor) {
-		const pos = editor.getPosition();
-		const lines = code.split("\n").slice(0, pos.lineNumber);
-		if (pos.column > 1) {
-			lines[lines.length - 1] = lines[lines.length - 1].slice(
-				0,
-				pos.column - 1,
-			);
-		}
-		const upTo = lines.join("\n");
-		code = upTo;
-	}
-	const cmds = parseCommands(code);
-	runCommands(
-		cmds,
-		ctx,
-		SCREEN_WIDTH,
-		SCREEN_HEIGHT,
-		pointerBlink,
-		document.getElementById("showPointer")?.checked,
-	);
-}
+
 
 document.getElementById("runBtn").onclick = updateDisplay;
 
@@ -144,15 +119,11 @@ function stopAnimation() {
 	animationInterval = null;
 }
 
-const font = new FontFace("Picopixel", "url(../fonts/Picopixel.ttf)");
-font.load().then((loadedFace) => {
-	document.fonts.add(loadedFace);
-	updateDisplay();
-});
+
 
 setInterval(() => {
 	pointerBlink = !pointerBlink;
 	if (document.getElementById("showPointer")?.checked) updateDisplay();
 }, 400);
 
-export default editor
+export default editor;

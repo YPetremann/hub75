@@ -20,12 +20,12 @@
 		"enabled": true,
 		"rules": {
 			"recommended": true,
-      "style": {
-        "noParameterAssign": "off"
-      },
+			"style": {
+				"noParameterAssign": "off"
+			},
 			"suspicious": {
-        "noExplicitAny": "warn"
-      }
+				"noExplicitAny": "warn"
+			}
 		}
 	},
 	"javascript": {

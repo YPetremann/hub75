@@ -3,17 +3,10 @@
   <head>
     <meta charset="UTF-8"/>
     <title>Simulateur Hub75</title>
-    <link rel="stylesheet" href="./index.css"/>
+    <link rel="stylesheet" href="./src/index.css"/>
+    <script type="module" src="./src/index.tsx"></script>
   </head>
-  <body class="font-sans m-0 p-0 bg-[#222] text-[#eee] flex flex-col  h-screen">
-    <div id="controls" class="flex gap-1 items-center">
-   
-    </div>
-    <div id="editor" class="w-screen h-1 grow"></div>
-    <div class="flex flex-row">
-      <canvas id="canvas" width="640" height="320" class="bg-[#111] p-0" style="image-rendering:pixelated;"></canvas>
-      <div id="help" class="grow">Plop</div>
-    </div>
-    <script type="module" src="./index.ts"></script>
+  <body>
+    <div id="app"></div>
   </body>
 </html>
