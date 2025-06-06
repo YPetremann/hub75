@@ -1,4 +1,5 @@
-#include "BufferedMatrixPanel.h"
+#include <RGBmatrixPanel.h>
+#include <Adafruit_GFX.h>
 #include <Fonts/Picopixel.h>
 //#define CLK  8   // USE THIS ON ADAFRUIT METRO M0, etc.
 //#define CLK A4 // USE THIS ON METRO M4 (not M0)
@@ -13,7 +14,8 @@
 #define SCREEN_HEIGHT 32
 
 // Enable double buffering
-BufferedMatrixPanel *matrix = new BufferedMatrixPanel(A, B, C, D, CLK, LAT, OE, true, SCREEN_WIDTH);
+RGBmatrixPanel *matrix = new RGBmatrixPanel(A, B, C, D, CLK, LAT, OE, true, SCREEN_WIDTH);
+
 bool LOG=false;
 void setup() {
   Serial.begin(9600);
@@ -27,21 +29,14 @@ void setup() {
   Serial.println("================");
   Serial.println("Tappe ? pour afficher l'aide");
 
-  doCommands("C 0 0 0;F;Z");
+  doCommands("C 0 0 0;F;z");
   doCommands("C 255 255 255;M 1 1;P \"AVILAB ANIMATION\";M 1 7;P \"LET'S GO\"");
-  doCommands("C 255 0 0;M 0 13;h 64;Z");
-  doCommands("C 255 255 0;M 0 14;h 64;Z");
-  doCommands("C 0 255 0;M 0 15;h 64;Z");
-  doCommands("C 0 255 255;M 0 16;h 64;Z");
-  doCommands("C 0 0 255;M 0 17;h 64;Z");
-  doCommands("C 255 0 255;M 0 18;h 64;M 0 0;Z");
-}
-
-void loop() {
-  removeCursor();
-  displayCursor();
-  show();
-  delay(50);
+  doCommands("C 255 0 0;M 0 13;h 64;z");
+  doCommands("C 255 255 0;M 0 14;h 64;z");
+  doCommands("C 0 255 0;M 0 15;h 64;z");
+  doCommands("C 0 255 255;M 0 16;h 64;z");
+  doCommands("C 0 0 255;M 0 17;h 64;z");
+  doCommands("C 255 0 255;M 0 18;h 64;M 0 0;z");
 }
 
 String inputString = "";
@@ -54,13 +49,32 @@ void serialEvent() {
     }else inputString += inChar;
   }
 }
+
 bool autoDisplay=false;
+unsigned long previousMillis = 0;
+const unsigned long interval = 250; // 250 milliseconds
+void loop() {
+  /*
+  if(autoDisplay){
+    unsigned long currentMillis = millis();
+
+    if (currentMillis - previousMillis >= interval) {
+      previousMillis = currentMillis;
+      removeCursor();
+      show();
+      displayCursor();
+      show();
+    }
+  }
+  */
+}
+
 void doCommands(String input) {
   input=input+"\n";
   String cmdsBuf = "";
   bool inString = false;
   bool inComment = false;
-  if(autoDisplay) removeCursor();
+  //if(autoDisplay) removeCursor();
   
   for (int i = 0; i < input.length(); i++) {
     char c = input.charAt(i);
@@ -82,8 +96,11 @@ void doCommands(String input) {
       cmdsBuf += c;
     }
   }
-  if(autoDisplay) displayCursor();
-  if(autoDisplay) matrix->swapBuffers(true);
+  if(autoDisplay) {
+    show();
+    //displayCursor();
+    //show();
+  }
 }
 
 String cmdArgs="";
@@ -362,9 +379,15 @@ int argInt(String val, int defaultVal) {
 }
 
 uint16_t col=0;
+bool bright = true;
 // C
 void color(byte r, byte g, byte b){
   col=matrix->Color888(r,g,b);
+    // Calculate perceived brightness
+  float luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+  
+  // You can tweak this threshold
+  bright = luminance > 127;
 }
 
 int cx=0;
@@ -373,9 +396,10 @@ uint16_t ocol=0;
 void removeCursor(){
   matrix->drawPixel(cx,cy,ocol);
 }
+
 void displayCursor(){
-  ocol = matrix->getPixel(cx,cy);
-  uint16_t ncol = millis() % 500 < 250 ? matrix->Color888(0,0,0):col;
+  //ocol = matrix->getPixel(cx,cy);
+  uint16_t ncol = millis() % 500 > 250 ? col: bright ? matrix->Color888(0,0,0) : matrix->Color888(255,255,255);
   matrix->drawPixel(cx,cy, ncol);
 }
 
