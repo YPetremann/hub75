@@ -1,59 +1,33 @@
 import React from "react";
-
+import { useRefState } from "../utils/useRefState";
+import { Icon } from "@iconify/react";
+type Setter<T> = React.Dispatch<React.SetStateAction<T>>;
 type ToolbarProps = {
-	onRender: (line:number) => boolean;
-	onToggleAutoRender: (value: boolean) => void;
-	onToggleRenderToCursor: (value: boolean) => void;
-  onToggleRenderGuide: (value: boolean) => void;
+	autoRender: boolean; setAutoRender: Setter<boolean>;
+	renderToCursor: boolean; setRenderToCursor: Setter<boolean>;
+	renderGuide: boolean; setRenderGuide: Setter<boolean>;
+	isPlaying: boolean, setPlaying: Setter<boolean>;
+	frameDelay:number, setFrameDelay: Setter<number>;
+	count: number; setCount: Setter<number>;
 };
 
-const timeout = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 export function Toolbar({
-	onRender,
-	onToggleAutoRender,
-	onToggleRenderToCursor,
-  onToggleRenderGuide,
-}) {
-	const [autoRender, setAutoRender] = React.useState(true);
-	const [renderToCursor, setRenderToCursor] = React.useState(true);
-  const [renderGuide, setRenderGuide] = React.useState(false);
-  const [frameDelay, _setFrameDelay] = React.useState(100);
-  const frameDelayRef = React.useRef(frameDelay);
-  const setFrameDelay = React.useCallback((value:number) => {
-    frameDelayRef.current = value;
-    _setFrameDelay(value);
-  }, []);
-
-  const [isPlaying, _setPlaying] = React.useState(false);
-  const isPlayingRef = React.useRef(isPlaying);
-  const setPlaying = React.useCallback((value:boolean) => {
-    isPlayingRef.current = value;
-    _setPlaying(value);
-  }, []);
-  
-  const onAnimate = React.useCallback(async ()=>{
-    setPlaying(true);
-    onToggleRenderToCursor(true);
-    let lineNumber = 0;
-    while(isPlayingRef.current) {
-      const hitEnd = onRender(lineNumber);
-      if (hitEnd) break
-      lineNumber++;
-      await timeout(frameDelayRef.current);
-    }
-    setPlaying(false);
-    onToggleRenderToCursor(false);
-  }, [onRender,setPlaying]);
-
+	autoRender, setAutoRender,
+	renderToCursor, setRenderToCursor,
+	renderGuide, setRenderGuide,
+	isPlaying, setPlaying,
+	frameDelay, setFrameDelay,
+	count, setCount
+}: ToolbarProps) {
 	return (
-		<div className="flex gap-1 p-1 items-center">
+		<div className="w-full flex gap-1 p-1 items-center">
 			<button
-				onClick={onRender}
+				onClick={() => setCount((p: number) => p + 1)}
 				type="button"
 				className="flex flex-row items-center px-2 py-1 gap-1 rounded bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50"
 				disabled={autoRender}
 			>
-				<iconify-icon icon="mdi:image" />
+				<Icon icon="mdi:image" />
 				<span>Générer</span>
 			</button>
 			<label className="flex px-2 py-1 gap-1 items-center">
@@ -61,25 +35,19 @@ export function Toolbar({
 					type="checkbox"
 					className="accent-blue-500"
 					checked={autoRender}
-					onChange={(e) => {
-						setAutoRender(e.target.checked);
-						onToggleAutoRender(e.target.checked);
-					}}
+					onChange={(e) => setAutoRender(e.target.checked)}
 				/>
-				<iconify-icon icon="mdi:auto-mode" />
-				Automatique
+				<Icon icon="mdi:auto-mode" />
+				Auto
 			</label>
 			<label className="flex px-2 py-1 gap-1 items-center">
 				<input
 					type="checkbox"
 					className="accent-blue-500"
 					checked={renderToCursor}
-					onChange={(e) => {
-						setRenderToCursor(e.target.checked);
-						onToggleRenderToCursor(e.target.checked);
-					}}
+					onChange={(e) => setRenderToCursor(e.target.checked)}
 				/>
-				<iconify-icon icon="mdi:cursor-text" />
+				<Icon icon="mdi:cursor-text" />
 				Au curseur
 			</label>
 			<label className="flex px-2 py-1 gap-1 items-center">
@@ -87,34 +55,23 @@ export function Toolbar({
 					type="checkbox"
 					className="accent-purple-500"
 					checked={renderGuide}
-					onChange={(e) => {
-						setRenderGuide(e.target.checked);
-						onToggleRenderGuide(e.target.checked);
-					}}
+					onChange={(e) => setRenderGuide(e.target.checked)}
 				/>
-				<iconify-icon icon="mdi:plus" />
+				<Icon icon="mdi:plus" />
 				Guide
 			</label>
-			{isPlaying ? <button
+			<button
 				type="button"
 				className="flex flex-row items-center px-2 py-1 gap-1 rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
-				onClick={()=>setPlaying(false)}
+				onClick={() => setPlaying((p: boolean) => !p)}
 			>
-				<iconify-icon icon="mdi:stop" />
-				Stop
-			</button> : <button
-				type="button"
-				className="flex flex-row items-center px-2 py-1 gap-1 rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
-				onClick={onAnimate}
-			>
-				<iconify-icon icon="mdi:play" />
-				Animer
+				<Icon icon={isPlaying ? "mdi:stop" : "mdi:play"} />
+				{isPlaying ? "Stop" : "Animer"}
 			</button>
-      }
 			<label className="flex items-center px-2 py-1 gap-1">
 				<input
 					type="range"
-          className="accent-green-600"
+					className="accent-green-600"
 					min={10}
 					max={2000}
 					step={50}
@@ -123,6 +80,8 @@ export function Toolbar({
 				/>
 				<span>{frameDelay} ms</span>
 			</label>
+			<div className="grow" />
+			<div className="p-1">{count}</div>
 		</div>
 	);
 }

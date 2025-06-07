@@ -1,58 +1,100 @@
-import React from "react";
+import React, { use } from "react";
 import { Editor } from "./components/Editor";
 import Screen from "./components/Screen";
 import { Toolbar } from "./components/Toolbar";
 import { defaultCode } from "./data/defaultCode";
-import { updateDisplay } from "./rendered/updateDisplay";
+import renderFrame from "./rendered/renderFrame";
+import Help from "./components/Help";
+import { useRefState } from "./utils/useRefState";
 
-async function preLoader(){
+async function preLoader() {
 	const font = new FontFace("Picopixel", "url(../fonts/Picopixel.ttf)");
-	await font.load().then((loadedFace) => {
-		document.fonts.add(loadedFace);
-	});
+	const loadedFace = await font.load()
+	document.fonts.add(loadedFace);
 }
 
+type Pos = { forced?:boolean; lineNumber: number; column: number }
+
+const timeout = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 export function App() {
-	const [renderData, setRenderData] = React.useState<string>(defaultCode);
-	const [renderFrame, setRenderFrame] = React.useState<() => void>(() => () => {});
-	const contentRef = React.useRef<string>(defaultCode);
-	const posRef = React.useRef<{ lineNumber: number; column: number }>({
-		lineNumber: 0,
-		column: 0,
-	});
+	const [editorData, setEditorData] = React.useState<string>(defaultCode);
+	const [renderData, setRenderData] = React.useState<string>("");
+	const [renderCount, setRenderCount] = React.useState(0);
+	const [cursorPos, setCursorPos] = React.useState<Pos>({ lineNumber: 0, column: 0 });
+	const [autoRender, setAutoRender] = React.useState(true);
+	const [renderToCursor, setRenderToCursor] = React.useState(false);
+	const [isPlayingRef, isPlaying, setPlaying] = useRefState(false);
+	const [frameDelayRef, frameDelay, setFrameDelay] = useRefState(100);
+	const [renderGuide, setRenderGuide] = React.useState(false);
+
+	const handleRender = React.useCallback(() => {
+		const pos = renderToCursor ? cursorPos : null
+		let data = editorData;
+		if (pos) {
+			const lines = data.split("\n").slice(0, pos.lineNumber);
+			if (lines.length > 0) lines.splice(-1, 1, lines.at(-1)!.slice(0, pos.column - 1))
+			data = lines.join("\n");
+		}
+		setRenderData(data);
+	}, [editorData, renderToCursor, cursorPos]);
+
+	React.useEffect(() => {
+		if (autoRender) handleRender();
+	}, [autoRender, renderToCursor, editorData, cursorPos]);
+
+	React.useEffect(() => {
+		handleRender()
+	}, [renderCount]);
 
 	React.useEffect(() => {
 		preLoader().then(()=>{
-			setRenderFrame(()=>updateDisplay)
-		});
+			setRenderCount(x=>x+1)
+		})
 	}, []);
-	function onChange(value: string) {
-		contentRef.current = value;
-	}
-	function onCursorChange(
-		position: { lineNumber: number; column: number } | null,
-	) {
-		// ...existing code...
-	}
 
-	function handleRender() {
-		setRenderData(contentRef.current);
-	}
+	React.useEffect(() => {
+		if (!isPlaying) return
+		setAutoRender(true);
+		setRenderToCursor(true);
+		let lineNumber = 0
+		let timer: number;
+		function setAnim() {
+			if (!isPlayingRef.current) return;
+			setCursorPos({ forced: true, lineNumber, column: 0 });
+			lineNumber++;
+			const steps = editorData.split("\n");
+			if (lineNumber > steps.length + 1) return setPlaying(false);
+			timer = setTimeout(setAnim, frameDelayRef.current);
+		}
+		setAnim()
+		return () => { clearTimeout(timer) }
+	}, [isPlaying]);
 
 	return (
 		<div className="font-sans bg-[#222] text-[#eee] flex flex-col h-screen">
-			<Toolbar
-				onRender={handleRender}
-				autoRender={false}
-				onToggleAutoRender={() => {}}
-				renderToCursor={false}
-				onToggleRenderToCursor={() => {}}
-				onAnimate={() => {}}
-				frameDelay={100}
-				onFrameDelayChange={() => {}}
-			/>
-			<Editor onChange={onChange} onCursorChange={onCursorChange} />
-			<Screen renderData={renderData} renderFrame={renderFrame} />
+			<Toolbar {...{
+				autoRender, setAutoRender,
+				renderToCursor, setRenderToCursor,
+				isPlaying, setPlaying,
+				renderGuide, setRenderGuide,
+				frameDelay, setFrameDelay,
+				count: renderCount,
+				setCount: setRenderCount
+			}} />
+			<Editor {...{
+				renderToCursor,
+				cursorPos, setCursorPos,
+				editorData, setEditorData
+			}} />
+			<div className="flex">
+				<Screen {...{
+					renderData,
+					renderGuide,
+					renderFrame,
+				}} />
+				<Help />
+			</div>
 		</div>
 	);
 }

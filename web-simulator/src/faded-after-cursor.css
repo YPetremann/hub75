@@ -1,0 +1,5 @@
+/* Faded text after cursor for Monaco Editor */
+.monaco-editor .faded-after-cursor {
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}

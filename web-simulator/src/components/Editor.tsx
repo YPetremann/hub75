@@ -1,46 +1,83 @@
+import React, { useRef } from "react";
 import MonacoEditor, {
 	DiffEditor,
 	useMonaco,
 	loader,
+	Monaco,
 } from "@monaco-editor/react";
-import editor from "../../modules/editor";
-import { defaultCode } from "../data/defaultCode";
+import type monaco from 'monaco-editor';
+import "../faded-after-cursor.css";
+import { registerHub75 } from "../utils/lang";
+
+type Pos = { forced?:boolean; lineNumber: number; column: number }
+type Setter<T> = React.Dispatch<React.SetStateAction<T>>;
 
 type EditorProps = {
-	onChange?: (value: string) => void;
-	onCursorChange?: (
-		position: { lineNumber: number; column: number } | null,
-	) => void;
+	renderToCursor: boolean;
+	cursorPos: Pos; setCursorPos: Setter<Pos>;
+	editorData: string; setEditorData: Setter<string>;
 };
+export function Editor({ renderToCursor, cursorPos, editorData, setCursorPos, setEditorData }: EditorProps) {
+	const monaco = useMonaco()
+	const block=useRef(false);
 
-export function Editor({ onChange, onCursorChange }: EditorProps) {
+	const editorRef = React.useRef<monaco.editor.IStandaloneCodeEditor>(null);
+	const decorationIds = React.useRef<string[]>([]);
+
+	React.useEffect(() => {
+		const editor = editorRef.current;
+		if (!editor || !monaco) return;
+		if(cursorPos.forced){
+			block.current=true;
+			editor.setPosition(cursorPos);
+			block.current=false;
+		} 
+	}, [cursorPos]);
+
+	// Update decoration when renderToCursor changes
+	React.useEffect(() => {
+		const editor = editorRef.current;
+		if (!editor || !monaco) return;
+		const position = editor.getPosition();
+		const model = editor.getModel();
+		if (!position || !model) return;
+		const startLine = position.lineNumber;
+		const startCol = position.column;
+		const endLine = model.getLineCount();
+		const endCol = model.getLineLength(endLine);
+		// If cursor is at the very end, remove decoration
+		if (!renderToCursor || startLine === endLine && startCol > endCol) {
+			decorationIds.current = editor.deltaDecorations(decorationIds.current, []);
+			return;
+		}
+
+		const range = new monaco.Range(startLine, startCol, endLine, endCol + 1);
+		const decorations = [
+			{ range, options: { inlineClassName: "faded-after-cursor", } },
+		];
+		decorationIds.current = editor.deltaDecorations(decorationIds.current, decorations);
+	}, [renderToCursor,cursorPos]);
 	return (
-		<div className="grow relative overflow-hidden">
+		<div className="w-full grow relative overflow-hidden border-y border-gray-300">
 			<MonacoEditor
 				height="100%"
 				theme="vs-dark"
 				defaultLanguage="hub75"
-				beforeMount={(monaco) => {
-					monaco.languages.register({ id: "hub75" });
-					monaco.languages.setMonarchTokensProvider("hub75", {
-						tokenizer: {
-							root: [
-								[/\b([CFZzMmLlHhVvRrP])\b/, "keyword"],
-								[/"[^"]*"/, "string"],
-								[/#[^\n]*/, "comment"],
-								[/\b\d+\b/, "number"],
-								[/;/, "delimiter"],
-							],
-						},
+				options={{
+					scrollBeyondLastLine: false,
+				}}
+				beforeMount={(monaco: Monaco) => {
+					registerHub75(monaco);
+				}}
+				onMount={(editor) => {
+					editorRef.current = editor;
+					editor.onDidChangeCursorPosition(() => {
+						if (block.current) return;
+						setCursorPos(editor.getPosition()!)
 					});
 				}}
-				onMount={(editor, monaco) => {
-					editor.onDidChangeModelContent(() => onChange?.(editor.getValue()));
-					editor.onDidChangeCursorPosition(() =>
-						onCursorChange?.(editor.getPosition()),
-					);
-				}}
-				defaultValue={defaultCode}
+				value={editorData}
+				onChange={(v)=>setEditorData(v!)}
 			/>
 		</div>
 	);

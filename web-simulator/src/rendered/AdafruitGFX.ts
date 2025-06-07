@@ -11,7 +11,8 @@ class Matrix{
 		ctx.scale(10, 10);
 	}
 
-	color888(r:number, g:number, b:number) {
+	swapBuffers(copy:boolean) {}
+	Color888(r:number, g:number, b:number):string {
 		return `rgb(${r},${g},${b})`;
 	}
 	
@@ -32,29 +33,51 @@ class Matrix{
 	fillScreen(color:string) {
 		this.fillRect(0, 0, this.width, this.height, color);
 	}
+
 	drawLine(x0:number, y0:number, x1:number, y1:number, color:string) {
+    this.writeLine(x0, y0, x1, y1, color);
+	}
+
+	writeLine (x0:number, y0:number, x1:number, y1:number, color:string){
 		if (!this.ctx) return
-		let _x0 = Math.round(x0);
-		let _y0 = Math.round(y0);
-		const _x1 = Math.round(x1);
-		const _y1 = Math.round(y1);
-		const dx = Math.abs(_x1 - _x0);
-		const sx = _x0 < _x1 ? 1 : -1;
-		const dy = -Math.abs(_y1 - _y0);
-		const sy = _y0 < _y1 ? 1 : -1;
-		let err = dx + dy;
-		let e2: number;
-		while (true) {
-			this.drawPixel(_x0, _y0, color);
-			if (_x0 === _x1 && _y0 === _y1) break;
-			e2 = 2 * err;
-			if (e2 >= dy) {
-				err += dy;
-				_x0 += sx;
+		// draw a line using ctx canvas API
+				
+		x0 = Math.round(x0);
+		y0 = Math.round(y0);
+		x1 = Math.round(x1);
+		y1 = Math.round(y1);
+		let steep = Math.abs(y1 - y0) > Math.abs(x1 - x0);
+		if (steep) {
+			[x0, y0] = [y0, x0];
+			[x1, y1] = [y1, x1];
+		}
+		if(x0>x1){
+			[x0, x1] = [x1, x0];
+			[y0, y1] = [y1, y0];
+		}
+		
+		let dx = x1 - x0
+		let dy = Math.abs(y1 - y0)
+
+		let err = dx / 2;
+		let ystep
+
+		if(y0 < y1) {
+			ystep = 1;
+		} else {
+			ystep = -1;
+		}
+
+		for(; x0 <= x1; x0++) {
+			if (steep) {
+				this.drawPixel(y0, x0, color);
+			} else {
+				this.drawPixel(x0, y0, color);
 			}
-			if (e2 <= dx) {
+			err -= dy;
+			if (err < 0) {
+				y0 += ystep;
 				err += dx;
-				_y0 += sy;
 			}
 		}
 	}
@@ -71,20 +94,25 @@ class Matrix{
 	drawGrayscaleBitmap(x:number, y:number, bitmap:number[], w:number,h:number, mask:number){}
 	drawRGBBitmap(x:number, y:number, bitmap:number[], w:number,h:number, mask:number){}
 	drawChar(x:number, y:number, c:string, color:string, bg:string,sx:number,sy:number){}
-	getTextBounds(text:string, x:number, y:number, x1:number, y1:number, w:number, h:number) {}
+	getTextBounds(text:string, x:number, y:number,) {
+		if (!this.ctx) return
+		this.ctx.font = `${7.7}px Picopixel, monospace`;
+		const m= this.ctx.measureText(text)
+		return [x+m.width,y, m.width, 5]
+	}
 	setTextSize(sx:number, sy:number) {}
 	setFont(font:string) {}
 	setCursor(x:number, y:number) {}
-	setTextColor(color:string,bg:string) {}
+	setTextColor(color:string,bg?:string) {}
 	setTextWrap(wrap:boolean) {}
 	cp437(enable:boolean) {}
-	print(text:string) {
+	print(x:number,y:number,text:string, color:string) {
 		if (!this.ctx) return
 		this.ctx.save();
 		this.ctx.fillStyle = color;
-		this.ctx.font = `${8}px Picopixel, monospace`;
-		this.ctx.textBaseline = "top";
-		this.ctx.fillText(text, x, y);
+		this.ctx.font = `${7.7}px Picopixel, monospace`;
+		this.ctx.textBaseline = "middle";
+		this.ctx.fillText(text, x, y+3.3);
 		this.ctx.restore();
 	}
 	

@@ -19,14 +19,13 @@ const Screen: React.FC<ScreenProps> = ({ renderData, renderFrame }) => {
 		if (!ctx) return;
 		renderFrame(ctx, renderData);
 	}, [renderData, renderFrame]);
-
 	return (
 		<div className="flex flex-col items-center justify-center">
 			<canvas
 				ref={canvasRef}
 				width={CANVAS_WIDTH}
 				height={CANVAS_HEIGHT}
-				className="border border-gray-300 bg-black"
+				className="border-r border-gray-300 bg-black"
 			/>
 		</div>
 	);
