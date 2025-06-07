@@ -46,9 +46,9 @@ export function print(text: string){
 
 }
 // R
-export function rectTo(ax: number, ay: number){ matrix.fillRect(cx,cy, ax,ay, col); }
+export function rectTo(ax: number, ay: number){ matrix.fillRect(cx,cy, ax-cx,ay-cy, col); moveTo(ax,ay); }
 // r
-export function rectBy(rx: number, ry: number){ matrix.fillRect(cx,cy, cx+rx,cy+ry, col); }
+export function rectBy(rx: number, ry: number){ rectTo(cx+rx, cy+ry); }
 // c
 export function circle(r: number){ matrix.fillCircle(cx,cy, r, col);}
 // t
@@ -128,7 +128,7 @@ export default function doCommand(cmdBuf:string){
     let x2 = argInt(getArg(3,"X"),0);
     let y2 = argInt(getArg(4,"Y"),0);
     console.log("[ OK ] TRIANGLE ABS"+JSON.stringify({x1,y1,x2,y2}));
-    triangleBy(x1,y1,x2,y2);
+    triangleTo(x1,y1,x2,y2);
   }
   else if(cmdName=="t"){
     let x1 = argInt(getArg(1,"U"),0);
@@ -136,7 +136,7 @@ export default function doCommand(cmdBuf:string){
     let x2 = argInt(getArg(3,"X"),0);
     let y2 = argInt(getArg(4,"Y"),0);
     console.log("[ OK ] TRIANGLE REF"+JSON.stringify({x1,y1,x2,y2}));
-    triangleTo(x1,y1,x2,y2);
+    triangleBy(x1,y1,x2,y2);
   }
   else if(cmdName=="L"){
     let x = argInt(getArg(1,"X"),0);
