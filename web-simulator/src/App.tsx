@@ -6,9 +6,10 @@ import { defaultCode } from "./data/defaultCode";
 import renderFrame from "./rendered/renderFrame";
 import Help from "./components/Help";
 import { useRefState } from "./utils/useRefState";
+import picopixel from "../fonts/Picopixel.ttf?url";
 
 async function preLoader() {
-	const font = new FontFace("Picopixel", "url(../fonts/Picopixel.ttf)");
+	const font = new FontFace("Picopixel", `url(${picopixel})`);
 	const loadedFace = await font.load()
 	document.fonts.add(loadedFace);
 }
