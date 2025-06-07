@@ -25,9 +25,9 @@ jobs:
         with:
           bun-version: 1.2.0
       - working-directory: ./web-simulator
-        run:
-          bun install
-          bun run build
+        run: bun install
+      - working-directory: ./web-simulator
+        run: bun run build
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
