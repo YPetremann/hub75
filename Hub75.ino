@@ -12,13 +12,12 @@
 #define D   A3
 #define SCREEN_WIDTH  64
 #define SCREEN_HEIGHT 32
-
+// #define LOG
 // Enable double buffering
 RGBmatrixPanel *matrix = new RGBmatrixPanel(A, B, C, D, CLK, LAT, OE, true, SCREEN_WIDTH);
 
-bool LOG=false;
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200); // Increased baud rate for faster serial
   matrix->begin();
   matrix->setFont(&Picopixel);
   color(0,0,0);
@@ -46,7 +45,8 @@ void serialEvent() {
     if (inChar == '\n') {
       doCommands(inputString);
       inputString="";
-    }else inputString += inChar;
+    }
+    else inputString += inChar;
   }
 }
 
@@ -111,271 +111,242 @@ void doCommand(String cmdBuf){
   cmdArgs.trim();
   if(cmdName=="?") {
     Serial.println("Commands List:");
-    Serial.println("C R0 V0 B255;  # definie couleur a 0,0,255 (bleu)");
-    Serial.println("M X5 Y10       # deplace position a 5,10");
-    Serial.println("m X5 Y10       # deplace position de 5,10");
-    Serial.println("L <X> <Y>      # fait une line a <X> <Y>");
-    Serial.println("l <X> <Y>      # fait une line de <X> <Y>");
-    Serial.println("H <X>          # fait une ligne horizontale a <X>");
-    Serial.println("h <X>          # fait une ligne horizontale de <X>");
-    Serial.println("V <Y>          # fait une ligne verticale a <Y>");
-    Serial.println("v <Y>          # fait une ligne verticale de <Y>");
-    Serial.println("P \"Texte\"     # ecrit Texte");
-    Serial.println("R <X> <Y>      # fait un rectangle a <X> <Y>");
-    Serial.println("r <X> <Y>      # fait un rectangle de <X> <Y>");
-    Serial.println("Z              # affiche le dessin");
-  }else if(cmdName=="C" || cmdName=="c") {
+    Serial.println("C 0 0 255    # definie couleur a 0,0,255 (bleu)");
+    Serial.println("M 5 10       # deplace position a 5,10");
+    Serial.println("m 5 5        # deplace position de 5,10");
+    Serial.println("c 5          # fait un cercle de rayon 5");
+    Serial.println("T 5 5 10 10  # fait un triangle par 5,5 et 10,10");
+    Serial.println("t 5 5 10 10  # fait un triangle de 5,5 et 10,10");
+    Serial.println("L 5 5        # fait une line a 5,5");
+    Serial.println("l 5 5        # fait une line de 5 5");
+    Serial.println("H 5          # fait une ligne horizontale a 5");
+    Serial.println("h 5          # fait une ligne horizontale de 5");
+    Serial.println("V 5          # fait une ligne verticale a 5");
+    Serial.println("v 5          # fait une ligne verticale de 5");
+    Serial.println("P \"Texte\"    # ecrit Texte");
+    Serial.println("R 10 5       # fait un rectangle a 10,5");
+    Serial.println("r 10 5       # fait un rectangle de 10,5");
+    Serial.println("F            # rempli l'ecran");
+    Serial.println("Z            # affiche le dessin (affichage automatique)");
+    Serial.println("z            # affiche le dessin (affichage manuel)");
+  }
+  else if(cmdName=="C") {
     int r = argInt(getArg(1,"R"),0);
     int v = argInt(getArg(2,"V"),0);
     int b = argInt(getArg(3,"B"),0);
-    if(LOG){
+
+    #ifdef LOG
       Serial.print("[ OK ] COLOR");
       Serial.print(" R "); Serial.print(r);
       Serial.print(" V "); Serial.print(v);
       Serial.print(" B "); Serial.print(b);
       Serial.println();
-    }
+    #endif
 
     color(r,v,b);
-  }else if(cmdName=="M"){
+  }
+  else if(cmdName=="M"){
     int x = argInt(getArg(1,"X"),0);
     int y = argInt(getArg(2,"Y"),0);
 
-    if(LOG){
+    #ifdef LOG
       Serial.print("[ OK ] MOVE ABS");
       Serial.print(" X "); Serial.print(x);
       Serial.print(" Y "); Serial.print(y);
       Serial.println();
-    }
+    #endif
 
     moveTo(x,y);
-  }else if(cmdName=="m"){
+  }
+  else if(cmdName=="m"){
     int x = argInt(getArg(1,"X"),0);
     int y = argInt(getArg(2,"Y"),0);
 
-    if(LOG){
+    #ifdef LOG
       Serial.print("[ OK ] MOVE REL");
       Serial.print(" X "); Serial.print(x);
       Serial.print(" Y "); Serial.print(y);
       Serial.println();
-    }
+    #endif
+
     moveBy(x,y);
-  }else if(cmdName=="L"){
+  }
+  else if(cmdName=="c"){
+    int r = argInt(getArg(1,"R"),0);
+
+    #ifdef LOG
+      Serial.print("[ OK ] CIRCLE");
+      Serial.print(" R "); Serial.print(r);
+      Serial.println();
+    #endif
+
+    circle(r);
+  }
+  else if(cmdName=="T"){
+    int x1 = argInt(getArg(1,"U"),0);
+    int y1 = argInt(getArg(2,"V"),0);
+    int x2 = argInt(getArg(3,"X"),0);
+    int y2 = argInt(getArg(4,"Y"),0);
+
+    #ifdef LOG
+      Serial.print("[ OK ] TRIANGLE ABS");
+      Serial.print(" R "); Serial.print(r);
+      Serial.println();
+    #endif
+
+    triangleBy(x1,y1,x2,y2);
+  }
+  else if(cmdName=="t"){
+    int x1 = argInt(getArg(1,"U"),0);
+    int y1 = argInt(getArg(2,"V"),0);
+    int x2 = argInt(getArg(3,"X"),0);
+    int y2 = argInt(getArg(4,"Y"),0);
+
+    #ifdef LOG
+      Serial.print("[ OK ] TRIANGLE REF");
+      Serial.print(" R "); Serial.print(r);
+      Serial.println();
+    #endif
+
+    triangleTo(x1,y1,x2,y2);
+  }
+  else if(cmdName=="L"){
     int x = argInt(getArg(1,"X"),0);
     int y = argInt(getArg(2,"Y"),0);
 
-    if(LOG){
+    #ifdef LOG
       Serial.print("[ OK ] LINE ABS");
       Serial.print(" X "); Serial.print(x);
       Serial.print(" Y "); Serial.print(y);
       Serial.println();
-    }
+    #endif
 
     lineTo(x,y);
-  }else if(cmdName=="l"){
+  }
+  else if(cmdName=="l"){
     int x = argInt(getArg(1,"X"),0);
     int y = argInt(getArg(2,"Y"),0);
 
-    if(LOG){
+    #ifdef LOG
       Serial.print("[ OK ] LINE REL");
       Serial.print(" X "); Serial.print(x);
       Serial.print(" Y "); Serial.print(y);
       Serial.println();
-    }
+    #endif
 
     lineBy(x,y);
-  }else if(cmdName=="H"){
+  }
+  else if(cmdName=="H"){
     int x = argInt(getArg(1,"X"),0);
 
-    if(LOG){
+    #ifdef LOG
       Serial.print("[ OK ] LINE H ABS");
       Serial.print(" X "); Serial.print(x);
       Serial.println();
-    }
+    #endif
 
     lineVTo(x);
-  }else if(cmdName=="h"){
+  }
+  else if(cmdName=="h"){
     int x = argInt(getArg(1,"X"),0);
 
-    if(LOG){
+    #ifdef LOG
       Serial.print("[ OK ] LINE H REL");
       Serial.print(" X "); Serial.print(x);
       Serial.println();
-    }
+    #endif
 
     lineHBy(x);
-  }else if(cmdName=="V"){
+  }
+  else if(cmdName=="V"){
     int y = argInt(getArg(1,"Y"),0);
 
-    if(LOG){
+    #ifdef LOG
       Serial.print("[ OK ] LINE V ABS");
       Serial.print(" Y "); Serial.print(y);
       Serial.println();
-    }
+    #endif
 
     lineHTo(y);
-  }else if(cmdName=="v"){
+  }
+  else if(cmdName=="v"){
     int y = argInt(getArg(1,"Y"),0);
 
-    if(LOG){
+    #ifdef LOG
       Serial.print("[ OK ] LINE V REL");
       Serial.print(" Y "); Serial.print(y);
       Serial.println();
-    }
+    #endif
 
     lineHBy(y);
-  }else if(cmdName=="P"){
+  }
+  else if(cmdName=="P"){
     String t = argString(getArg(1,"T"),"?");
 
-    if(LOG){
+    #ifdef LOG
       Serial.print("[ OK ] PRINT");
       Serial.print(" T "); Serial.print(t);
       Serial.println();
-    }
+    #endif
 
     print(t);
-  }else if(cmdName=="R"){
+  }
+  else if(cmdName=="R"){
     int x = argInt(getArg(1,"X"),0);
     int y = argInt(getArg(2,"Y"),0);
 
-    if(LOG){
+    #ifdef LOG
       Serial.print("[ OK ] RECT ABS");
       Serial.print(" X "); Serial.print(x);
       Serial.print(" Y "); Serial.print(y);
       Serial.println();
-    }
+    #endif
 
     rectTo(x,y);
-  }else if(cmdName=="r"){
+  }
+  else if(cmdName=="r"){
     int x = argInt(getArg(1,"X"),0);
     int y = argInt(getArg(2,"Y"),0);
 
-    if(LOG){
+    #ifdef LOG
       Serial.print("[ OK ] RECT REL");
       Serial.print(" X "); Serial.print(x);
       Serial.print(" Y "); Serial.print(y);
       Serial.println();
-    }
+    #endif
 
     rectBy(x,y);
-  }else if(cmdName=="F" || cmdName=="f" ){
-    if(LOG){
+  }
+  else if(cmdName=="F" || cmdName=="f" ){
+    #ifdef LOG
       Serial.print("[ OK ] FILLSCREEN");
       Serial.println();
-    }
+    #endif
 
     cls();
-  }else if(cmdName=="z"){
-    if(LOG){
+  }
+  else if(cmdName=="z"){
+    #ifdef LOG
       Serial.print("[ OK ] SHOW");
       Serial.println();
-    }
+    #endif
     autoDisplay=false;
     show();
-  }else if(cmdName=="Z"){
-    if(LOG){
+  }
+  else if(cmdName=="Z"){
+    #ifdef LOG
       Serial.print("[ OK ] SHOW");
       Serial.println();
-    }
+    #endif
     autoDisplay=true;
     show();
-  }else {
+  }
+  else {
     Serial.print("[FAIL] invalid command : ");
     Serial.print(cmdName);
     Serial.print(" ");
     Serial.println(cmdArgs);
   }
-}
-
-String getArg(byte index, String key){
-  String val = getArg(key);
-  if(val.length()==0) val = getArg(index);
-  return val;
-}
-
-String getArg(byte index) {
-  byte currentIndex = 1; // args are 1-based
-  bool inQuote = false;
-  byte start = 0;
-  byte length = 0;
-  byte i = 0;
-  while (i < cmdArgs.length()) {
-    while (i < cmdArgs.length() && cmdArgs[i] == ' ') i++;
-    if (i >= cmdArgs.length()) break;
-
-    start = i;
-    if (cmdArgs[i] == '"') {
-      inQuote = true;
-      i++; // skip opening quote
-      while (i < cmdArgs.length() && cmdArgs[i] != '"') i++;
-      i++; // include closing quote
-    } else {
-      while (i < cmdArgs.length() && cmdArgs[i] != ' ') i++;
-    }
-    if (currentIndex == index) {
-      String ret=cmdArgs.substring(start, i);
-      return ret;
-    }
-    currentIndex++;
-  }
-  return ""; // not found
-}
-
-String getArg(String key) {
-  bool inQuote = false;
-  byte i = 0;
-  byte keyLen = key.length();
-  while (i < cmdArgs.length()) {
-    // skip leading spaces
-    while (i < cmdArgs.length() && cmdArgs[i] == ' ') i++;
-
-    if (i >= cmdArgs.length()) break;
-
-    byte start = i;
-
-    // Handle quoted arguments
-    if (cmdArgs[i] == '"') {
-      i++; // skip opening quote
-      while (i < cmdArgs.length() && cmdArgs[i] != '"') i++;
-      i++; // include closing quote
-    } else {
-      // Check if the argument starts with the key
-      if (cmdArgs[i] == key[0]) {
-        if (cmdArgs.substring(i, i + keyLen) == key) {
-          byte valueStart = i + keyLen;
-          byte valueEnd = valueStart;
-          if (valueStart < cmdArgs.length() && cmdArgs[valueStart] == '"') {
-            valueStart++;
-            valueEnd = valueStart;
-            while (valueEnd < cmdArgs.length() && cmdArgs[valueEnd] != '"') valueEnd++;
-            return cmdArgs.substring(valueStart, valueEnd); 
-          } else {
-            while (valueEnd < cmdArgs.length() && cmdArgs[valueEnd] != ' ') valueEnd++;
-            return cmdArgs.substring(valueStart, valueEnd);
-          }
-        }
-      }
-      while (i < cmdArgs.length() && cmdArgs[i] != ' ') i++;
-    }
-    i++;
-  }
-  return ""; // not found
-}
-
-String argString(String val, String defaultVal) {
-  if (val.length() == 0) return defaultVal;
-  if (val.length() >= 2 && val[0] == '"' && val[val.length() - 1] == '"') {
-    val = val.substring(1, val.length() - 1);
-  }
-  return val;
-}
-
-int argInt(String val, int defaultVal) {
-  if (val.length() == 0) return defaultVal;
-  for (int i = 0; i < val.length(); i++) {
-    if (!isDigit(val[i]) && !(i == 0 && val[i] == '-')) return defaultVal;
-  }
-  return val.toInt();
 }
 
 uint16_t col=0;
@@ -432,7 +403,16 @@ void print(String text){
 void rectTo(int ax, int ay){ matrix->fillRect(cx,cy, ax,ay, col); }
 // r
 void rectBy(int rx, int ry){ matrix->fillRect(cx,cy, cx+rx,cy+ry, col); }
-
+// c
+void circle(int r){ matrix->fillCircle(cx,cy, r, col); }
+void triangleBy(int x1, int y1, int x2, int y2) {
+  matrix->fillTriangle(cx, cy, cx + x1, cy + y1, cx + x2, cy + y2, col);
+  moveTo(cx + x2, cy + y2);
+}
+void triangleTo(int x1, int y1, int x2, int y2) {
+  matrix->fillTriangle(cx, cy, x1, y1, x2, y2, col);
+  moveTo(x2, y2);
+}
 // F
 void cls(){ matrix->fillScreen(col);}
 
