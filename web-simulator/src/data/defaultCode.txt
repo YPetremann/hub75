@@ -1,6 +1,6 @@
-export const defaultCode = `# Démo de toutes les commandes Hub75
+# Démo de toutes les commandes Hub75
 C 0 0 0;F;Z # fond noir
-C 127 000 255; M 1 15;   H 25; L 35 5;  H 62;Z
+C 127 000 255; M 1 17;   H 25; L 35 7;  H 62;Z
 C 255 000 255; m -61 11; h 24; l 10 -10; h 27;Z
 C 255 000 192; m -61 11; h 24; l 10 -10; h 27;Z
 C 255 000 000; m -61 11; h 24; l 10 -10; h 27;Z
@@ -17,6 +17,10 @@ C 000 255 000;P "I";Z
 C 000 255 127;P "L";Z
 C 000 255 255;P "A";Z
 C 000 127 255;P "B";Z
+C 127 127 127;P "  ANIMATION"
 
-M 1 7;r 5 5;m 3 -3;c 2;m 4 2;t 2 -4 4 0
-`;
+C 000 000 127;M 1 7;r 7 7;
+C 127 000 000;m 4 -4;c 3;
+C 000 127 000;m 5 3;t 3 -6 6 0
+
+M 35 20;C 255 255 255;P "LET'S GO"

@@ -2,7 +2,7 @@ import React, { use } from "react";
 import { Editor } from "./components/Editor";
 import Screen from "./components/Screen";
 import { Toolbar } from "./components/Toolbar";
-import { defaultCode } from "./data/defaultCode";
+import defaultCode from "./data/defaultCode.txt?raw";
 import renderFrame from "./rendered/renderFrame";
 import Help from "./components/Help";
 import { useRefState } from "./utils/useRefState";

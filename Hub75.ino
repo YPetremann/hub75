@@ -69,6 +69,7 @@ void loop() {
   */
 }
 
+bool success=true;
 void doCommands(String input) {
   input=input+"\n";
   String cmdsBuf = "";
@@ -94,6 +95,9 @@ void doCommands(String input) {
     } else {
       if(c == '"') inString = !inString;
       cmdsBuf += c;
+    }
+    if(success) {
+      Serial.println("[ OK ] done");
     }
   }
   if(autoDisplay) {
@@ -342,11 +346,103 @@ void doCommand(String cmdBuf){
     show();
   }
   else {
+    success=false;
     Serial.print("[FAIL] invalid command : ");
     Serial.print(cmdName);
     Serial.print(" ");
     Serial.println(cmdArgs);
   }
+}
+
+String getArg(byte index, String key){
+  String val = getArg(key);
+  if(val.length()==0) val = getArg(index);
+  return val;
+}
+
+String getArg(byte index) {
+  byte currentIndex = 1; // args are 1-based
+  bool inQuote = false;
+  byte start = 0;
+  byte length = 0;
+  byte i = 0;
+  while (i < cmdArgs.length()) {
+    while (i < cmdArgs.length() && cmdArgs[i] == ' ') i++;
+    if (i >= cmdArgs.length()) break;
+
+    start = i;
+    if (cmdArgs[i] == '"') {
+      inQuote = true;
+      i++; // skip opening quote
+      while (i < cmdArgs.length() && cmdArgs[i] != '"') i++;
+      i++; // include closing quote
+    } else {
+      while (i < cmdArgs.length() && cmdArgs[i] != ' ') i++;
+    }
+    if (currentIndex == index) {
+      String ret=cmdArgs.substring(start, i);
+      return ret;
+    }
+    currentIndex++;
+  }
+  return ""; // not found
+}
+
+String getArg(String key) {
+  bool inQuote = false;
+  byte i = 0;
+  byte keyLen = key.length();
+  while (i < cmdArgs.length()) {
+    // skip leading spaces
+    while (i < cmdArgs.length() && cmdArgs[i] == ' ') i++;
+
+    if (i >= cmdArgs.length()) break;
+
+    byte start = i;
+
+    // Handle quoted arguments
+    if (cmdArgs[i] == '"') {
+      i++; // skip opening quote
+      while (i < cmdArgs.length() && cmdArgs[i] != '"') i++;
+      i++; // include closing quote
+    } else {
+      // Check if the argument starts with the key
+      if (cmdArgs[i] == key[0]) {
+        if (cmdArgs.substring(i, i + keyLen) == key) {
+          byte valueStart = i + keyLen;
+          byte valueEnd = valueStart;
+          if (valueStart < cmdArgs.length() && cmdArgs[valueStart] == '"') {
+            valueStart++;
+            valueEnd = valueStart;
+            while (valueEnd < cmdArgs.length() && cmdArgs[valueEnd] != '"') valueEnd++;
+            return cmdArgs.substring(valueStart, valueEnd); 
+          } else {
+            while (valueEnd < cmdArgs.length() && cmdArgs[valueEnd] != ' ') valueEnd++;
+            return cmdArgs.substring(valueStart, valueEnd);
+          }
+        }
+      }
+      while (i < cmdArgs.length() && cmdArgs[i] != ' ') i++;
+    }
+    i++;
+  }
+  return ""; // not found
+}
+
+String argString(String val, String defaultVal) {
+  if (val.length() == 0) return defaultVal;
+  if (val.length() >= 2 && val[0] == '"' && val[val.length() - 1] == '"') {
+    val = val.substring(1, val.length() - 1);
+  }
+  return val;
+}
+
+int argInt(String val, int defaultVal) {
+  if (val.length() == 0) return defaultVal;
+  for (int i = 0; i < val.length(); i++) {
+    if (!isDigit(val[i]) && !(i == 0 && val[i] == '-')) return defaultVal;
+  }
+  return val.toInt();
 }
 
 uint16_t col=0;
