@@ -16,8 +16,9 @@
 // Enable double buffering
 RGBmatrixPanel *matrix = new RGBmatrixPanel(A, B, C, D, CLK, LAT, OE, true, SCREEN_WIDTH);
 
+bool report=false;
 void setup() {
-  Serial.begin(115200); // Increased baud rate for faster serial
+  Serial.begin(57600); // Increased baud rate for faster serial
   matrix->begin();
   matrix->setFont(&Picopixel);
   color(0,0,0);
@@ -28,14 +29,32 @@ void setup() {
   Serial.println("================");
   Serial.println("Tappe ? pour afficher l'aide");
 
-  doCommands("C 0 0 0;F;z");
-  doCommands("C 255 255 255;M 1 1;P \"AVILAB ANIMATION\";M 1 7;P \"LET'S GO\"");
-  doCommands("C 255 0 0;M 0 13;h 64;z");
-  doCommands("C 255 255 0;M 0 14;h 64;z");
-  doCommands("C 0 255 0;M 0 15;h 64;z");
-  doCommands("C 0 255 255;M 0 16;h 64;z");
-  doCommands("C 0 0 255;M 0 17;h 64;z");
-  doCommands("C 255 0 255;M 0 18;h 64;M 0 0;z");
+  color(0,0,0);cls();show();
+  color(127,000,255); moveTo(1,17); lineHTo(25); lineTo(35,7);lineHTo(62);show();
+  color(255,000,255); moveBy(-61,11); lineHBy(24); lineBy(10,-10); lineHBy(27);show();
+  color(255,000,192); moveBy(-61,11); lineHBy(24); lineBy(10,-10); lineHBy(27);show();
+  color(255,000,000); moveBy(-61,11); lineHBy(24); lineBy(10,-10); lineHBy(27);show();
+  color(255,127,000); moveBy(-61,11); lineHBy(24); lineBy(10,-10); lineHBy(27);show();
+  color(255,255,000); moveBy(-61,11); lineHBy(24); lineBy(10,-10); lineHBy(27);show();
+  color(000,255,000); moveBy(-61,11); lineHBy(24); lineBy(10,-10); lineHBy(27);show();
+  color(000,255,255); moveBy(-61,11); lineHBy(24); lineBy(10,-10); lineHBy(27);show();
+  color(000,127,255); moveBy(-61,11); lineHBy(24); lineBy(10,-10); lineHBy(27);show();
+  color(000,000,255); moveBy(-61,11); lineHBy(24); lineBy(10,-10); lineHBy(27);show();
+
+  color(255,255,000);moveTo(1,1);print("A");show();
+  color(127,255,000);print("V");show();
+  color(000,255,000);print("I");show();
+  color(000,255,127);print("L");show();
+  color(000,255,255);print("A");show();
+  color(000,127,255);print("B");show();
+  color(127,127,127);print("  ANIMATION");
+
+  color(000,000,127);moveTo(2,8); rectTo(7,7);
+  color(127,000,000);moveBy(11,3);circle(3);
+  color(000,127,000);moveBy(5,3); triangleBy(3,-6,6,0);;
+
+  report=true;
+  moveTo(35,20);color(255,255,255);print("LET'S GO");show();
 }
 
 String inputString = "";
@@ -96,20 +115,22 @@ void doCommands(String input) {
       if(c == '"') inString = !inString;
       cmdsBuf += c;
     }
-    if(success) {
-      Serial.println("[ OK ] done");
-    }
   }
   if(autoDisplay) {
     show();
     //displayCursor();
     //show();
   }
+  if(success && report) {
+    Serial.println("[ OK ]");
+  }
 }
 
 String cmdArgs="";
 void doCommand(String cmdBuf){
+  cmdBuf.trim();
   byte index=cmdBuf.indexOf(' ');
+  if(index==-1) index=cmdBuf.length();
   String cmdName=cmdBuf.substring(0,index);
   cmdArgs=cmdBuf.substring(index);
   cmdArgs.trim();
@@ -118,7 +139,7 @@ void doCommand(String cmdBuf){
     Serial.println("C 0 0 255    # definie couleur a 0,0,255 (bleu)");
     Serial.println("M 5 10       # deplace position a 5,10");
     Serial.println("m 5 5        # deplace position de 5,10");
-    Serial.println("c 5          # fait un cercle de rayon 5");
+    Serial.println("c            # fait un cercle de rayon 5");
     Serial.println("T 5 5 10 10  # fait un triangle par 5,5 et 10,10");
     Serial.println("t 5 5 10 10  # fait un triangle de 5,5 et 10,10");
     Serial.println("L 5 5        # fait une line a 5,5");
@@ -287,7 +308,7 @@ void doCommand(String cmdBuf){
   else if(cmdName=="P"){
     String t = argString(getArg(1,"T"),"?");
 
-    #ifdef LOG
+    #ifndef LOG
       Serial.print("[ OK ] PRINT");
       Serial.print(" T "); Serial.print(t);
       Serial.println();
@@ -491,9 +512,19 @@ void lineHBy(int rx){ lineBy(rx,0); }
 void lineVBy(int ry){ lineBy(0,ry); }
 // P
 void print(String text){
+  Serial.print('"');
+  Serial.print(text);
+  Serial.println('"');
+
   matrix->setCursor(cx, cy+4);
   matrix->setTextColor(col);
   matrix->print(text);
+  int x1;
+  int y1;
+  int tw;
+  int th;
+  matrix->getTextBounds(text, cx, cy+4, &x1, &y1, &tw, &th);
+  cx+=tw+1;
 }
 // R
 void rectTo(int ax, int ay){ matrix->fillRect(cx,cy, ax,ay, col); }
