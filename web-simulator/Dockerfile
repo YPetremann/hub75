@@ -19,6 +19,8 @@ RUN cd /temp/prod
 COPY package.json bun.lockb /temp/prod/
 RUN cd /temp/prod && bun install --frozen-lockfile --production
 COPY . .
+RUN ls -la
+RUN cd /temp/prod && ls -la
 RUN cd /temp/prod && bun run build
 
 # copy production dependencies and source code into final image
