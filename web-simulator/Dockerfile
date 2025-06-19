@@ -15,10 +15,11 @@ RUN cd /temp/dev && bun install --frozen-lockfile
 FROM base AS prerelease
 ENV NODE_ENV=production
 RUN mkdir -p /temp/prod
+RUN cd /temp/prod
 COPY package.json bun.lockb /temp/prod/
 RUN cd /temp/prod && bun install --frozen-lockfile --production
 COPY . .
-RUN bun run build
+RUN cd /temp/prod && bun run build
 
 # copy production dependencies and source code into final image
 FROM base AS release
