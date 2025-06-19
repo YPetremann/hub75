@@ -17,7 +17,8 @@ ENV NODE_ENV=production
 RUN mkdir -p /temp/prod
 RUN cd /temp/prod
 COPY package.json bun.lockb /temp/prod/
-RUN cd /temp/prod && bun install --production
+RUN cd /temp/prod && bun install 
+# --production
 COPY . /temp/prod
 RUN cd /temp/prod && bun run build
 
