@@ -26,7 +26,7 @@ RUN cd /temp/prod && bun run build
 FROM base AS release
 COPY --from=prerelease /temp/prod/node_modules node_modules
 COPY --from=prerelease /temp/prod/package.json .
-COPY --from=prerelease /temp/prod/dist .
+COPY --from=prerelease /temp/prod/dist dist
 
 # run the app
 USER bun

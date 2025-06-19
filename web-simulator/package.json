@@ -10,7 +10,7 @@
 		"dev": "vite",
 		"build": "vite build",
 		"test": "vitest",
-		"start": "serve"
+		"start": "serve dist"
 	},
 	"dependencies": {
 		"@iconify/react": "^6.0.0",
