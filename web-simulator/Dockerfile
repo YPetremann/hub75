@@ -23,6 +23,7 @@ RUN cd /temp/prod && bun run check
 RUN cd /temp/prod && bun run build
 
 FROM base AS release
+COPY index.ts index.ts
 COPY --from=install /temp/dev/node_modules node_modules
 COPY --from=prerelease /temp/prod/package.json package.json
 COPY --from=prerelease /temp/prod/dist dist
