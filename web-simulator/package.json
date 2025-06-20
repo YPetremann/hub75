@@ -11,7 +11,7 @@
 		"check": "biome check",
 		"build": "vite build",
 		"test": "vitest",
-		"start": "./index.ts"
+		"start": "bun run index.ts"
 	},
 	"dependencies": {
 		"serve-static-bun": "^0.5.3"
