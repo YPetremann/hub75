@@ -40,10 +40,10 @@ const Screen: React.FC<ScreenProps> = ({
 	return (
 		<div className="flex flex-col items-center justify-center">
 			<canvas
+				className="border-r border-gray-300 bg-black"
+				height={CANVAS_HEIGHT}
 				ref={canvasRef}
 				width={CANVAS_WIDTH}
-				height={CANVAS_HEIGHT}
-				className="border-r border-gray-300 bg-black"
 			/>
 		</div>
 	);

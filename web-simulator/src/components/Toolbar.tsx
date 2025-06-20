@@ -34,61 +34,61 @@ export function Toolbar({
 	return (
 		<div className="w-full flex gap-1 p-1 items-center">
 			<button
-				onClick={() => setCount((p: number) => p + 1)}
-				type="button"
 				className="flex flex-row items-center px-2 py-1 gap-1 rounded bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50"
 				disabled={autoRender}
+				onClick={() => setCount((p: number) => p + 1)}
+				type="button"
 			>
 				<Icon icon="mdi:image" />
 				<span>Générer</span>
 			</button>
 			<label className="flex px-2 py-1 gap-1 items-center">
 				<input
-					type="checkbox"
-					className="accent-blue-500"
 					checked={autoRender}
+					className="accent-blue-500"
 					onChange={(e) => setAutoRender(e.target.checked)}
+					type="checkbox"
 				/>
 				<Icon icon="mdi:auto-mode" />
 				Auto
 			</label>
 			<label className="flex px-2 py-1 gap-1 items-center">
 				<input
-					type="checkbox"
-					className="accent-blue-500"
 					checked={renderToCursor}
+					className="accent-blue-500"
 					onChange={(e) => setRenderToCursor(e.target.checked)}
+					type="checkbox"
 				/>
 				<Icon icon="mdi:cursor-text" />
 				Au curseur
 			</label>
 			<label className="flex px-2 py-1 gap-1 items-center">
 				<input
-					type="checkbox"
-					className="accent-purple-500"
 					checked={renderGuide}
+					className="accent-purple-500"
 					onChange={(e) => setRenderGuide(e.target.checked)}
+					type="checkbox"
 				/>
 				<Icon icon="mdi:plus" />
 				Guide
 			</label>
 			<button
-				type="button"
 				className="flex flex-row items-center px-2 py-1 gap-1 rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
 				onClick={() => setPlaying((p: boolean) => !p)}
+				type="button"
 			>
 				<Icon icon={isPlaying ? "mdi:stop" : "mdi:play"} />
 				{isPlaying ? "Stop" : "Animer"}
 			</button>
 			<label className="flex items-center px-2 py-1 gap-1">
 				<input
-					type="range"
 					className="accent-green-600"
-					min={10}
 					max={2000}
-					step={50}
-					value={frameDelay}
+					min={10}
 					onChange={(e) => setFrameDelay(Number(e.target.value))}
+					step={50}
+					type="range"
+					value={frameDelay}
 				/>
 				<span>{frameDelay} ms</span>
 			</label>

@@ -71,13 +71,13 @@ export function ResourceLoader({
 				}}
 			>
 				<svg
-					width="48"
-					height="48"
-					viewBox="0 0 48 48"
-					fill="none"
-					xmlns="http://www.w3.org/2000/svg"
 					className="animate-spin"
+					fill="none"
+					height="48"
 					style={{ marginRight: 16 }}
+					viewBox="0 0 48 48"
+					width="48"
+					xmlns="http://www.w3.org/2000/svg"
 				>
 					<title>Chargement en cours</title>
 					<circle
@@ -85,8 +85,8 @@ export function ResourceLoader({
 						cy="24"
 						r="20"
 						stroke="#888"
-						strokeWidth="4"
 						strokeDasharray="31.4 31.4"
+						strokeWidth="4"
 					/>
 				</svg>
 				Chargement des ressources…

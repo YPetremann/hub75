@@ -68,15 +68,12 @@ export function Editor({
 	return (
 		<div className="w-full grow relative overflow-hidden border-y border-gray-300">
 			<MonacoEditor
-				height="100%"
-				theme="vs-dark"
-				defaultLanguage="hub75"
-				options={{
-					scrollBeyondLastLine: false,
-				}}
 				beforeMount={(monaco: Monaco) => {
 					registerHub75(monaco);
 				}}
+				defaultLanguage="hub75"
+				height="100%"
+				onChange={(v) => setEditorData(v)}
 				onMount={(editor) => {
 					editorRef.current = editor;
 					editor.onDidChangeCursorPosition(() => {
@@ -84,8 +81,11 @@ export function Editor({
 						setCursorPos(editor.getPosition());
 					});
 				}}
+				options={{
+					scrollBeyondLastLine: false,
+				}}
+				theme="vs-dark"
 				value={editorData}
-				onChange={(v) => setEditorData(v)}
 			/>
 		</div>
 	);
