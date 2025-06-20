@@ -1,0 +1,9 @@
+services:
+  hub75:
+    build: .
+    container_name: hub75
+    ports:
+      - "3000:3000"
+    # volumes:
+    #   - ./data:/app/data
+    restart: unless-stopped
