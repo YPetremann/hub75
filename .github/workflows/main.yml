@@ -27,6 +27,8 @@ jobs:
       - working-directory: ./web-simulator
         run: bun install
       - working-directory: ./web-simulator
+        env:
+          BASE_URL: "/hub75/"
         run: bun run build
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

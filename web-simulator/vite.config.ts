@@ -4,6 +4,8 @@ import license from "rollup-plugin-license";
 import { defineConfig } from "vite";
 import { devDependencies } from "./package.json";
 export default defineConfig({
+	// default to "/" but can be set with BASE_URL environment variable
+	base: process.env.BASE_URL || "/",
 	plugins: [tailwindcss()],
 	build: {
 		sourcemap: true,
