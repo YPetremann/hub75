@@ -82,6 +82,15 @@ class Matrix {
 	}
 	fillRect(x: number, y: number, w: number, h: number, color: string) {
 		if (!this.ctx) return;
+		// limit to canvas size
+		if (w < 0) [w, x] = [-w, x + w];
+		if (h < 0) [h, y] = [-h, y + h];
+		if (x < 0) [w, x] = [w + x, 0];
+		if (y < 0) [h, y] = [h + y, 0];
+		if (x + w > this._width) w = this._width - x;
+		if (y + h > this._height) h = this._height - y;
+		if (w <= 0 || h <= 0) return; // nothing to draw
+
 		this.ctx.fillStyle = color;
 		this.ctx.fillRect(Math.ceil(x), Math.ceil(y), Math.floor(w), Math.floor(h));
 	}
@@ -100,125 +109,17 @@ class Matrix {
 		}
 	}
 	drawCircle(x0: number, y0: number, r: number, color: string) {
-		let f = 1 - r;
-		let ddF_x = 1;
-		let ddF_y = -2 * r;
-		let x = 0;
-		let y = r;
-
-		this.writePixel(x0, y0 + r, color);
-		this.writePixel(x0, y0 - r, color);
-		this.writePixel(x0 + r, y0, color);
-		this.writePixel(x0 - r, y0, color);
-
-		while (x < y) {
-			if (f >= 0) {
-				y--;
-				ddF_y += 2;
-				f += ddF_y;
-			}
-			x++;
-			ddF_x += 2;
-			f += ddF_x;
-
-			this.writePixel(x0 + x, y0 + y, color);
-			this.writePixel(x0 - x, y0 + y, color);
-			this.writePixel(x0 + x, y0 - y, color);
-			this.writePixel(x0 - x, y0 - y, color);
-			this.writePixel(x0 + y, y0 + x, color);
-			this.writePixel(x0 - y, y0 + x, color);
-			this.writePixel(x0 + y, y0 - x, color);
-			this.writePixel(x0 - y, y0 - x, color);
-		}
-	}
-	drawCircleHelper(
-		x0: number,
-		y0: number,
-		r: number,
-		cornername: number,
-		color: string,
-	) {
-		let f = 1 - r;
-		let ddF_x = 1;
-		let ddF_y = -2 * r;
-		let x = 0;
-		let y = r;
-
-		while (x < y) {
-			if (f >= 0) {
-				y--;
-				ddF_y += 2;
-				f += ddF_y;
-			}
-			x++;
-			ddF_x += 2;
-			f += ddF_x;
-			if (cornername & 0x4) {
-				this.writePixel(x0 + x, y0 + y, color);
-				this.writePixel(x0 + y, y0 + x, color);
-			}
-			if (cornername & 0x2) {
-				this.writePixel(x0 + x, y0 - y, color);
-				this.writePixel(x0 + y, y0 - x, color);
-			}
-			if (cornername & 0x8) {
-				this.writePixel(x0 - y, y0 + x, color);
-				this.writePixel(x0 - x, y0 + y, color);
-			}
-			if (cornername & 0x1) {
-				this.writePixel(x0 - y, y0 - x, color);
-				this.writePixel(x0 - x, y0 - y, color);
-			}
-		}
+		// TODO
 	}
 	fillCircle(x0: number, y0: number, r: number, color: string) {
-		this.writeFastVLine(x0, y0 - r, 2 * r + 1, color);
-		this.fillCircleHelper(x0, y0, r, 3, 0, color);
-	}
-	fillCircleHelper(
-		x0: number,
-		y0: number,
-		r: number,
-		corners: number,
-		delta: number,
-		color: string,
-	) {
-		let f = 1 - r;
-		let ddF_x = 1;
-		let ddF_y = -2 * r;
-		let x = 0;
-		let y = r;
-		let px = x;
-		let py = y;
+		const minx = Math.max(x0 - r, 0);
+		const maxx = Math.min(x0 + r, this._width - 1);
+		const miny = Math.max(y0 - r, 0);
+		const maxy = Math.min(y0 + r, this._height - 1);
 
-		delta++; // Avoid some +1's in the loop
-
-		while (x < y) {
-			if (f >= 0) {
-				y--;
-				ddF_y += 2;
-				f += ddF_y;
-			}
-			x++;
-			ddF_x += 2;
-			f += ddF_x;
-			// These checks avoid double-drawing certain lines, important
-			// for the SSD1306 library which has an INVERT drawing mode.
-			if (x < y + 1) {
-				if (corners & 1)
-					this.writeFastVLine(x0 + x, y0 - y, 2 * y + delta, color);
-				if (corners & 2)
-					this.writeFastVLine(x0 - x, y0 - y, 2 * y + delta, color);
-			}
-			if (y !== py) {
-				if (corners & 1)
-					this.writeFastVLine(x0 + py, y0 - px, 2 * px + delta, color);
-				if (corners & 2)
-					this.writeFastVLine(x0 - py, y0 - px, 2 * px + delta, color);
-				py = y;
-			}
-			px = x;
-		}
+		for (let x = minx; x <= maxx; x++)
+			for (let y = miny; y <= maxy; y++)
+				if (Math.hypot(x - x0, y - y0) <= r) this.writePixel(x, y, color);
 	}
 	drawRect(x: number, y: number, w: number, h: number, color: string) {
 		this.writeFastHLine(x, y, w, color);
@@ -226,7 +127,7 @@ class Matrix {
 		this.writeFastVLine(x, y, h, color);
 		this.writeFastVLine(x + w - 1, y, h, color);
 	}
-	drawceilRect(
+	drawRoundRect(
 		x: number,
 		y: number,
 		w: number,
@@ -247,7 +148,7 @@ class Matrix {
 		this.drawCircleHelper(x + w - r - 1, y + h - r - 1, r, 4, color);
 		this.drawCircleHelper(x + r, y + h - r - 1, r, 8, color);
 	}
-	fillceilRect(
+	fillRoundRect(
 		x: number,
 		y: number,
 		w: number,
@@ -277,81 +178,22 @@ class Matrix {
 		this.drawLine(x2, y2, x0, y0, color);
 	}
 	fillTriangle(x0, y0, x1, y1, x2, y2, color) {
-		let a: number, b: number, y: number, last: number;
+		const minx = Math.max(Math.min(x0, x1, x2), 0);
+		const maxx = Math.min(Math.max(x0, x1, x2), this._width - 1);
+		const miny = Math.max(Math.min(y0, y1, y2), 0);
+		const maxy = Math.min(Math.max(y0, y1, y2), this._height - 1);
 
-		// Sort coordinates by Y order (y2 >= y1 >= y0)
-		if (y0 > y1) {
-			[x0, x1] = [x1, x0];
-			[y0, y1] = [y1, y0];
-		}
-		if (y1 > y2) {
-			[y2, y1] = [y1, y2];
-			[x2, x1] = [x1, x2];
-		}
-		if (y0 > y1) {
-			[y0, y1] = [y1, y0];
-			[x0, x1] = [x1, x0];
-		}
-
-		if (y0 === y2) {
-			// Handle awkward all-on-same-line case as its own thing
-			a = b = x0;
-			if (x1 < a) a = x1;
-			else if (x1 > b) b = x1;
-			if (x2 < a) a = x2;
-			else if (x2 > b) b = x2;
-			this.writeFastHLine(a, y0, b - a + 1, color);
-			return;
-		}
-
-		const dx01 = x1 - x0,
-			dy01 = y1 - y0,
-			dx02 = x2 - x0,
-			dy02 = y2 - y0,
-			dx12 = x2 - x1,
-			dy12 = y2 - y1;
-		let sa = 0,
-			sb = 0;
-
-		// For upper part of triangle, find scanline crossings for segments
-		// 0-1 and 0-2.  If y1=y2 (flat-bottomed triangle), the scanline y1
-		// is included here (and second loop will be skipped, avoiding a /0
-		// error there), otherwise scanline y1 is skipped here and handled
-		// in the second loop...which also avoids a /0 error here if y0=y1
-		// (flat-topped triangle).
-		if (y1 === y2)
-			last = y1; // Include y1 scanline
-		else last = y1 - 1; // Skip it
-
-		for (y = y0; y <= last; y++) {
-			a = x0 + sa / dy01;
-			b = x0 + sb / dy02;
-			sa += dx01;
-			sb += dx02;
-			/* longhand:
-			a = x0 + (x1 - x0) * (y - y0) / (y1 - y0);
-			b = x0 + (x2 - x0) * (y - y0) / (y2 - y0);
-			*/
-			if (a > b) [a, b] = [b, a];
-			this.writeFastHLine(a, y, b - a + 1, color);
-		}
-
-		// For lower part of triangle, find scanline crossings for segments
-		// 0-2 and 1-2.  This loop is skipped if y1=y2.
-		sa = Math.floor(dx12) * (y - y1);
-		sb = Math.floor(dx02) * (y - y0);
-		for (; y <= y2; y++) {
-			a = x1 + sa / dy12;
-			b = x0 + sb / dy02;
-			sa += dx12;
-			sb += dx02;
-			/* longhand:
-			a = x1 + (x2 - x1) * (y - y1) / (y2 - y1);
-			b = x0 + (x2 - x0) * (y - y0) / (y2 - y0);
-			*/
-			if (a > b) [a, b] = [b, a];
-			this.writeFastHLine(a, y, b - a + 1, color);
-		}
+		for (let x = minx; x <= maxx; x++)
+			for (let y = miny; y <= maxy; y++) {
+				// Barycentric coordinates
+				const a = ((y1 - y2) * (x - x2) + (x2 - x1) * (y - y2)) /
+					((y1 - y2) * (x0 - x2) + (x2 - x1) * (y0 - y2));
+				const b = ((y2 - y0) * (x - x2) + (x0 - x2) * (y - y2)) /
+					((y1 - y2) * (x0 - x2) + (x2 - x1) * (y0 - y2));
+				const c = 1 - a - b;
+				if (a >= 0 && b >= 0 && c >= 0) this.writePixel(x, y, color);
+			}
+				
 	}
 	drawBitmap(
 		x: number,
