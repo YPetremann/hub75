@@ -1,3 +1,3 @@
-export function millis(){
-  return Date.now();
+export function millis() {
+	return Date.now();
 }

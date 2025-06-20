@@ -1,23 +1,35 @@
-import React from "react";
-import { useRefState } from "../utils/useRefState";
 import { Icon } from "@iconify/react";
+import type React from "react";
+
 type Setter<T> = React.Dispatch<React.SetStateAction<T>>;
 type ToolbarProps = {
-	autoRender: boolean; setAutoRender: Setter<boolean>;
-	renderToCursor: boolean; setRenderToCursor: Setter<boolean>;
-	renderGuide: boolean; setRenderGuide: Setter<boolean>;
-	isPlaying: boolean, setPlaying: Setter<boolean>;
-	frameDelay:number, setFrameDelay: Setter<number>;
-	count: number; setCount: Setter<number>;
+	autoRender: boolean;
+	setAutoRender: Setter<boolean>;
+	renderToCursor: boolean;
+	setRenderToCursor: Setter<boolean>;
+	renderGuide: boolean;
+	setRenderGuide: Setter<boolean>;
+	isPlaying: boolean;
+	setPlaying: Setter<boolean>;
+	frameDelay: number;
+	setFrameDelay: Setter<number>;
+	count: number;
+	setCount: Setter<number>;
 };
 
 export function Toolbar({
-	autoRender, setAutoRender,
-	renderToCursor, setRenderToCursor,
-	renderGuide, setRenderGuide,
-	isPlaying, setPlaying,
-	frameDelay, setFrameDelay,
-	count, setCount
+	autoRender,
+	setAutoRender,
+	renderToCursor,
+	setRenderToCursor,
+	renderGuide,
+	setRenderGuide,
+	isPlaying,
+	setPlaying,
+	frameDelay,
+	setFrameDelay,
+	count,
+	setCount,
 }: ToolbarProps) {
 	return (
 		<div className="w-full flex gap-1 p-1 items-center">
