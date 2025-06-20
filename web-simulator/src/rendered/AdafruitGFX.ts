@@ -116,7 +116,7 @@ class Matrix {
 		const maxx = Math.min(x0 + r, this._width - 1);
 		const miny = Math.max(y0 - r, 0);
 		const maxy = Math.min(y0 + r, this._height - 1);
-
+		r-=0.5
 		for (let x = minx; x <= maxx; x++)
 			for (let y = miny; y <= maxy; y++)
 				if (Math.hypot(x - x0, y - y0) <= r) this.writePixel(x, y, color);
