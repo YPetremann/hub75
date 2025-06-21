@@ -10,7 +10,21 @@ import { useRefState } from "./utils/useRefState";
 type Pos = { forced?: boolean; lineNumber: number; column: number };
 
 export function App() {
-	const [editorData, setEditorData] = React.useState<string>(defaultCode);
+	const [editorData, setEditorData] = React.useState<string>(() => localStorage.getItem("editorData") ?? defaultCode);
+
+	// Save editorData to localStorage on change
+	React.useEffect(() => {
+		const handler = setTimeout(() => {
+			localStorage.setItem("editorData", editorData);
+		}, 500);
+		return () => clearTimeout(handler);
+	}, [editorData]);
+
+	// Reset action: call this to reset editorData to defaultCode
+	const handleReset = React.useCallback(() => {
+		setEditorData(defaultCode);
+		localStorage.removeItem("editorData");
+	}, []);
 	const [renderData, setRenderData] = React.useState<string>("");
 	const [renderCount, setRenderCount] = React.useState(0);
 	const [cursorPos, setCursorPos] = React.useState<Pos>({
@@ -85,6 +99,7 @@ export function App() {
 					setFrameDelay,
 					count: renderCount,
 					setCount: setRenderCount,
+					handleReset,
 				}}
 			/>
 			<Editor

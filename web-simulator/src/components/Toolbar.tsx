@@ -3,33 +3,23 @@ import type React from "react";
 
 type Setter<T> = React.Dispatch<React.SetStateAction<T>>;
 type ToolbarProps = {
-	autoRender: boolean;
-	setAutoRender: Setter<boolean>;
-	renderToCursor: boolean;
-	setRenderToCursor: Setter<boolean>;
-	renderGuide: boolean;
-	setRenderGuide: Setter<boolean>;
-	isPlaying: boolean;
-	setPlaying: Setter<boolean>;
-	frameDelay: number;
-	setFrameDelay: Setter<number>;
-	count: number;
-	setCount: Setter<number>;
+	autoRender: boolean; setAutoRender: Setter<boolean>;
+	renderToCursor: boolean; setRenderToCursor: Setter<boolean>;
+	renderGuide: boolean; setRenderGuide: Setter<boolean>;
+	isPlaying: boolean, setPlaying: Setter<boolean>;
+	frameDelay:number, setFrameDelay: Setter<number>;
+	count: number; setCount: Setter<number>;
+	handleReset: () => void;
 };
 
 export function Toolbar({
-	autoRender,
-	setAutoRender,
-	renderToCursor,
-	setRenderToCursor,
-	renderGuide,
-	setRenderGuide,
-	isPlaying,
-	setPlaying,
-	frameDelay,
-	setFrameDelay,
-	count,
-	setCount,
+	autoRender, setAutoRender,
+	renderToCursor, setRenderToCursor,
+	renderGuide, setRenderGuide,
+	isPlaying, setPlaying,
+	frameDelay, setFrameDelay,
+	count, setCount,
+	handleReset
 }: ToolbarProps) {
 	return (
 		<div className="w-full flex gap-1 p-1 items-center">
@@ -94,6 +84,21 @@ export function Toolbar({
 			</label>
 			<div className="grow" />
 			<div className="p-1">{count}</div>
+			<button
+				type="button"
+				className="flex flex-row items-center px-2 py-1 gap-1 rounded bg-red-600 text-white hover:bg-red-700"
+				onClick={() => {
+					handleReset();
+					setCount(0);
+					setAutoRender(false);
+					setRenderToCursor(false);
+					setPlaying(false);
+					setRenderGuide(false);
+				}}
+			>
+				<Icon icon="mdi:restart" />
+				Reset
+			</button>
 		</div>
 	);
 }
